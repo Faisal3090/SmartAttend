@@ -1,0 +1,39 @@
+{
+  "expo": {
+    "name": "SmartAttend",
+    "slug": "SmartAttend",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "scheme": "smartattend",
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.institution.smartattend"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#EEF4FF",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png",
+        "monochromeImage": "./assets/android-icon-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "com.institution.smartattend"
+    },
+    "web": {
+      "bundler": "metro",
+      "favicon": "./assets/favicon.png"
+    },
+    "experiments": {
+      "typedRoutes": true
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      "expo-sqlite",
+      "expo-font",
+      "expo-status-bar"
+    ]
+  }
+}

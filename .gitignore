@@ -1,0 +1,71 @@
+# ================================
+# Node / React Native
+# ================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ================================
+# Environment / Secrets
+# ================================
+.env
+.env.*
+!.env.example
+
+# ================================
+# Expo
+# ================================
+.expo/
+.expo-shared/
+
+# ================================
+# React Native / Android
+# ================================
+android/.gradle/
+android/build/
+android/app/build/
+android/.cxx/
+android/app/.cxx/
+
+# ================================
+# IDE
+# ================================
+.idea/
+.vscode/
+*.iml
+
+# ================================
+# OS
+# ================================
+.DS_Store
+Thumbs.db
+
+# ================================
+# Logs
+# ================================
+*.log
+
+# ================================
+# Temporary files
+# ================================
+*.tmp
+*.temp	
+
+mobile/android/worklets-build.txt
+
+# Android generated files
+mobile/android/.gradle/
+mobile/android/build/
+mobile/android/app/build/
+mobile/android/.cxx/
+mobile/android/app/.cxx/
+
+# Local test credentials / temporary files
+backend/.txt
+
+
+# Android local machine files
+mobile/android/local.properties
+mobile/android/hs_err_pid*.log
+mobile/android/replay_pid*.log
