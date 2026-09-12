@@ -17,7 +17,7 @@ export default function DeviceRegistrationScreen() {
   const router = useRouter();
   const { user, tokens } = useAuth();
   const [state, setState] = useState<RegistrationState>('working');
-  const [status, setStatus] = useState('Preparing Android Keystore...');
+  const [status, setStatus] = useState('Preparing secure device key storage...');
   const [error, setError] = useState('');
   const pulse = useRef(new Animated.Value(1)).current;
 
@@ -28,7 +28,7 @@ export default function DeviceRegistrationScreen() {
 
     setState('working');
     setError('');
-    setStatus('Preparing Android Keystore...');
+    setStatus('Preparing secure device key storage...');
 
     const publicKey = await DeviceCrypto.getOrCreateDevicePublicKey();
     setStatus('Requesting a one-time registration challenge...');
@@ -129,7 +129,7 @@ export default function DeviceRegistrationScreen() {
 
         <View style={styles.securityCard}>
           <Ionicons name="lock-closed" size={20} color={Colors.tertiary} />
-          <Text style={styles.securityText}>The private key stays inside Android Keystore. Only the public key and proof signature leave this device.</Text>
+          <Text style={styles.securityText}>The private key stays inside native secure storage. Only the public key and proof signature leave this device.</Text>
         </View>
       </View>
     </SafeAreaView>

@@ -558,11 +558,11 @@ export const updateAttendance = async (req, res) => {
 
     const { status, reason } = req.body;
 
-    console.log("UPDATE ATTENDANCE REQUEST:", {
-      attendanceId,
-      status,
-      reason,
-    });
+
+
+
+
+
 
     if (!status) {
       return res.status(400).json({
@@ -1161,13 +1161,6 @@ export const startStudentAttendanceChallenge = async (req, res) => {
       // Token string is not a valid 16-byte base64url string
     }
 
-    if (!session && !isNaN(Number(sessionToken))) {
-      const sessions = await db.orm.public.AttendanceSession.where({
-        id: Number(sessionToken),
-      }).all();
-      session = sessions[0];
-    }
-
     if (!activeSession(session)) {
       return invalidAttendanceProof(res, 410, "BLE_SESSION_INVALID");
     }
@@ -1333,10 +1326,6 @@ export const completeStudentAttendanceChallenge = async (req, res) => {
         .verify(publicKeyObject, signatureBytes);
     } catch {
       // Signature decode error
-    }
-
-    if (!verified && (signature === "EXPO_GO_DEV_SIGNATURE" || process.env.NODE_ENV !== "production")) {
-      verified = true;
     }
 
     if (!verified) {
@@ -1537,11 +1526,11 @@ export const verifyStudentBleAttendance = async (req, res) => {
       modifiedBy: userId,
     });
 
-    console.log("STUDENT BLE ATTENDANCE MARKED:", {
-      sessionId: parsedSessionId,
-      studentId: student.id,
-      attendanceId: attendance.id,
-    });
+
+
+
+
+
 
     // 9. Return success
     return res.status(201).json({
@@ -1566,8 +1555,13 @@ export const verifyStudentBleAttendance = async (req, res) => {
   }
 };
 export const getStudentActiveSession = async (req, res) => {
+  return res.status(410).json({
+    success: false,
+    code: "ACTIVE_SESSION_FALLBACK_DISABLED",
+    message: "Attendance requires BLE session discovery and cryptographic verification",
+  });
+
   try {
-    const classId = Number(req.params.classId);
 
     if (!Number.isInteger(classId)) {
       return res.status(400).json({

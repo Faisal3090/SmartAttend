@@ -12,8 +12,9 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../auth/AuthProvider';
+import { API_ROOT_URL } from '../../config/api';
 
-const API_BASE_URL = 'http://192.168.1.3:5000/api';
+const API_BASE_URL = API_ROOT_URL;
 
 type Participant = {
   studentId: number;

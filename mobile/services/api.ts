@@ -1,4 +1,6 @@
-const API_BASE_URL = "http://192.168.1.3:5000/api";
+import { API_ROOT_URL } from '../config/api';
+
+const API_BASE_URL = API_ROOT_URL;
 
 type ApiOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE";

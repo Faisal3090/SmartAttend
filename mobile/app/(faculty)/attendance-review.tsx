@@ -13,6 +13,7 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../auth/AuthProvider';
+import { API_ROOT_URL } from '../../config/api';
 
 type Participant = {
   studentId: number;
@@ -31,7 +32,7 @@ export default function AttendanceReviewScreen() {
 
   const sessionId = params.sessionId as string | undefined;
 
-  console.log('REVIEW SCREEN SESSION ID:', sessionId);
+
 
   const [participants, setParticipants] = useState<Participant[]>([]);
   const [loading, setLoading] = useState(true);
@@ -39,9 +40,9 @@ export default function AttendanceReviewScreen() {
 
   const fetchParticipants = async () => {
 
-    console.log('ATTENDANCE REVIEW PARAMS:', params);
-console.log('ATTENDANCE REVIEW SESSION ID:', sessionId);
-console.log('ATTENDANCE REVIEW TOKEN EXISTS:', !!tokens?.accessToken);
+
+
+
 
     if (!sessionId || !tokens?.accessToken) {
       setError('Session information is missing.');
@@ -54,7 +55,7 @@ console.log('ATTENDANCE REVIEW TOKEN EXISTS:', !!tokens?.accessToken);
       setError('');
 
       const response = await fetch(
-        `http://192.168.1.3:5000/api/attendance/sessions/${sessionId}/participants`,
+        `${API_ROOT_URL}/attendance/sessions/${sessionId}/participants`,
         {
           method: 'GET',
           headers: {
@@ -66,9 +67,9 @@ console.log('ATTENDANCE REVIEW TOKEN EXISTS:', !!tokens?.accessToken);
 
       const result = await response.json();
 
-console.log('ATTENDANCE REVIEW HTTP STATUS:', response.status);
-console.log('ATTENDANCE REVIEW SESSION ID:', sessionId);
-console.log('ATTENDANCE REVIEW RESPONSE:', result);
+
+
+
 
 if (!response.ok || !result.success) {
   throw new Error(

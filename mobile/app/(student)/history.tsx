@@ -22,8 +22,9 @@ import { Colors } from '../../constants/colors';
 import { Typography } from '../../constants/typography';
 import { Radius, Shadow, Spacing } from '../../constants/spacing';
 import { useAuth } from '../../auth/AuthProvider';
+import { API_ROOT_URL } from '../../config/api';
 
-const API_BASE_URL = 'http://192.168.1.3:5000/api';
+const API_BASE_URL = API_ROOT_URL;
 
 type AttendanceRecord = {
   attendanceId: number;
@@ -107,8 +108,8 @@ export default function HistoryScreen() {
 
       const result = await response.json();
 
-      console.log('STUDENT HISTORY STATUS:', response.status);
-      console.log('STUDENT HISTORY RESPONSE:', result);
+
+
 
       if (!response.ok || !result.success) {
         throw new Error(

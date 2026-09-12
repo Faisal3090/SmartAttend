@@ -2,7 +2,7 @@ const { withInfoPlist, withDangerousMod, withXcodeProject } = require('@expo/con
 const fs = require('fs');
 const path = require('path');
 
-const sourceFiles = ['SmartAttendBLE.swift', 'SmartAttendBLE.m'];
+const sourceFiles = ['SmartAttendBLE.swift', 'SmartAttendBLE.m', 'SmartAttendCrypto.swift', 'SmartAttendCrypto.m'];
 
 function withSmartAttendBLE(config) {
   config = withInfoPlist(config, (mod) => {

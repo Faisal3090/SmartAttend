@@ -16,7 +16,21 @@ import adminRoutes from "./routes/adminRoutes.js";
 
 const app = express();
 
-app.use(cors());
+const configuredCorsOrigins = (process.env.CORS_ORIGINS || '')
+  .split(',')
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
+app.use(cors({
+  origin(origin, callback) {
+    // Native mobile requests normally have no Origin header.
+    if (!origin) return callback(null, true);
+    if (process.env.NODE_ENV !== 'production' && configuredCorsOrigins.length === 0) {
+      return callback(null, true);
+    }
+    return callback(null, configuredCorsOrigins.includes(origin));
+  },
+}));
 app.use(express.json());
 
 app.get("/", (req, res) => {

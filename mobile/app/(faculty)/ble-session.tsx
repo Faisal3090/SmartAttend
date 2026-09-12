@@ -8,8 +8,9 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../auth/AuthProvider';
 import { BLEService } from '../../services/ble';
+import { API_ROOT_URL } from '../../config/api';
 
-const API_BASE_URL = 'http://192.168.1.3:5000/api';
+const API_BASE_URL = API_ROOT_URL;
 
 export default function BleSessionActiveScreen() {
   const router = useRouter();
@@ -131,8 +132,8 @@ export default function BleSessionActiveScreen() {
 
       const result = await response.json();
 
-      console.log('FINALIZE SESSION STATUS:', response.status);
-      console.log('FINALIZE SESSION RESPONSE:', result);
+
+
 
       if (!response.ok || !result.success) {
         throw new Error(
@@ -140,7 +141,7 @@ export default function BleSessionActiveScreen() {
         );
       }
 
-      console.log('GOING TO REVIEW WITH SESSION ID:', sessionId);
+
       
       BLEService.stopTeacherBroadcast();
       

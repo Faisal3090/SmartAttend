@@ -3,6 +3,7 @@ import { NativeModules, Platform } from 'react-native';
 type SmartAttendCryptoModule = {
   hasDeviceKey(): Promise<boolean>;
   getOrCreateDevicePublicKey(): Promise<string>;
+  deleteDeviceKey(): Promise<boolean>;
   signRegistrationPayload(
     challengeId: string,
     challenge: string,
@@ -26,24 +27,19 @@ const cryptoModule = NativeModules.SmartAttendCrypto as
   | undefined;
 
 function getModule(): SmartAttendCryptoModule {
-  if (Platform.OS !== 'android' || !cryptoModule) {
-    throw new Error('Android Keystore is unavailable on this device');
+  if (!cryptoModule) {
+    throw new Error(`Secure device key storage is unavailable on ${Platform.OS}`);
   }
   return cryptoModule;
 }
 
 export const DeviceCrypto = {
   async hasDeviceKey(): Promise<boolean> {
-    if (!cryptoModule) return true;
-    return cryptoModule.hasDeviceKey();
+    return getModule().hasDeviceKey();
   },
 
   async getOrCreateDevicePublicKey(): Promise<string> {
-    if (!cryptoModule) {
-      console.warn('SmartAttendCrypto native module unavailable. Using Expo Go fallback device public key.');
-      return 'MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAERVwXIiWoiBJEB5Q3WTy1ArUmKC7hjTaPfWLmJ1o_0R0K9bD-0ogTkq1awUIz17Jj4oF8P-BXckejYyBpPAPMKw';
-    }
-    return cryptoModule.getOrCreateDevicePublicKey();
+    return getModule().getOrCreateDevicePublicKey();
   },
 
   async signRegistrationPayload(
@@ -53,11 +49,7 @@ export const DeviceCrypto = {
     publicKey: string,
     expiresAt: string,
   ): Promise<string> {
-    if (!cryptoModule) {
-      console.warn('SmartAttendCrypto native module unavailable. Using Expo Go fallback registration signature.');
-      return 'EXPO_GO_DEV_SIGNATURE';
-    }
-    return cryptoModule.signRegistrationPayload(
+    return getModule().signRegistrationPayload(
       challengeId,
       challenge,
       studentId,
@@ -75,11 +67,7 @@ export const DeviceCrypto = {
     publicKey: string,
     expiresAt: string,
   ): Promise<string> {
-    if (!cryptoModule) {
-      console.warn('SmartAttendCrypto native module unavailable. Using Expo Go fallback attendance signature.');
-      return 'EXPO_GO_DEV_SIGNATURE';
-    }
-    return cryptoModule.signAttendancePayload(
+    return getModule().signAttendancePayload(
       challengeId,
       challenge,
       sessionId,
@@ -88,5 +76,9 @@ export const DeviceCrypto = {
       publicKey,
       expiresAt,
     );
+  },
+
+  async deleteDeviceKey(): Promise<boolean> {
+    return getModule().deleteDeviceKey();
   },
 };

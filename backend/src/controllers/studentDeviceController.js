@@ -154,10 +154,6 @@ export const completeStudentDeviceRegistration = async (req, res) => {
       // Signature decode error
     }
 
-    if (!verified && (signature === "EXPO_GO_DEV_SIGNATURE" || process.env.NODE_ENV !== "production")) {
-      verified = true;
-    }
-
     if (!verified) {
       return res.status(403).json({
         success: false,

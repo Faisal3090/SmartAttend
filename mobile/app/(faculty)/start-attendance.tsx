@@ -7,6 +7,7 @@ import { useAuth } from '../../auth/AuthProvider';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/colors';
+import { API_ROOT_URL } from '../../config/api';
 
 export default function StartAttendanceScreen() {
   const router = useRouter();
@@ -22,13 +23,10 @@ export default function StartAttendanceScreen() {
         throw new Error('No authentication token available');
       }
 
-      console.log(
-        'START SESSION TOKEN:',
-        `${tokens.accessToken.substring(0, 20)}...`
-      );
+
 
       const response = await fetch(
-        'http://192.168.1.3:5000/api/attendance/sessions',
+        `${API_ROOT_URL}/attendance/sessions`,
         {
           method: 'POST',
           headers: {
@@ -43,8 +41,7 @@ export default function StartAttendanceScreen() {
 
       const result = await response.json();
 
-      console.log('START SESSION STATUS:', response.status);
-      console.log('START SESSION RESPONSE:', result);
+
 
       if (response.status === 409 && result.data?.id) {
         console.log('Rejoining active attendance session:', result.data.id);

@@ -11,7 +11,7 @@ import {
 
 const root = resolve(import.meta.dirname, "..");
 const controller = readFileSync(resolve(root, "src/controllers/attendanceController.js"), "utf8");
-const scanner = readFileSync(resolve(root, "../mobile/android/app/src/main/java/com/smartattend/ble/AndroidBleScanner.kt"), "utf8");
+const scanner = readFileSync(resolve(root, "../mobile/android/app/src/main/java/com/institution/smartattend/ble/AndroidBleScanner.kt"), "utf8");
 
 const token = encodeBase64Url(randomBytes(16));
 assert.equal(decodeBase64Url(token, 16).length, 16);

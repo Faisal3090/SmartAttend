@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://192.168.1.3:5000';
+import { API_BASE_URL } from '../config/api';
 
 export interface BackendLoginResponse {
   success: boolean;
@@ -89,8 +89,8 @@ export async function getStudentProfile(accessToken: string) {
 
   const rawText = await response.text();
 
-  console.log('PROFILE STATUS:', response.status);
-  console.log('PROFILE RAW:', rawText);
+
+
 
   let result: any;
 

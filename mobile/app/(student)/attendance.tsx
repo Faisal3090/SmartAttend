@@ -22,8 +22,9 @@ import { Colors } from '../../constants/colors';
 import { Typography } from '../../constants/typography';
 import { Radius, Shadow, Spacing } from '../../constants/spacing';
 import { useAuth } from '../../auth/AuthProvider';
+import { API_ROOT_URL } from '../../config/api';
 
-const API_BASE_URL = 'http://192.168.1.3:5000/api';
+const API_BASE_URL = API_ROOT_URL;
 
 const RADIUS = 66;
 const CIRCUMFERENCE = 2 * Math.PI * RADIUS;

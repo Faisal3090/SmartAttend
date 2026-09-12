@@ -4,6 +4,13 @@ apply plugin: "com.facebook.react"
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
+def releaseStoreFilePath = findProperty('SMARTATTEND_RELEASE_STORE_FILE') ?: System.getenv('SMARTATTEND_RELEASE_STORE_FILE')
+def releaseStorePassword = findProperty('SMARTATTEND_RELEASE_STORE_PASSWORD') ?: System.getenv('SMARTATTEND_RELEASE_STORE_PASSWORD')
+def releaseKeyAlias = findProperty('SMARTATTEND_RELEASE_KEY_ALIAS') ?: System.getenv('SMARTATTEND_RELEASE_KEY_ALIAS')
+def releaseKeyPassword = findProperty('SMARTATTEND_RELEASE_KEY_PASSWORD') ?: System.getenv('SMARTATTEND_RELEASE_KEY_PASSWORD')
+def releaseSigningConfigured = [releaseStoreFilePath, releaseStorePassword, releaseKeyAlias, releaseKeyPassword]
+        .every { value -> value != null && value.toString().trim() }
+
 /**
  * This is the configuration block to customize your React Native Android app.
  * By default you don't need to apply any configuration, just uncomment the lines you need.
@@ -95,6 +102,12 @@ android {
         versionCode 1
         versionName "1.0.0"
 
+        // Exclude armeabi-v7a: triggers a CMake/Ninja infinite loop in react-native-reanimated.
+        // Modern Android devices only need arm64-v8a; x86_64 covers emulators.
+        ndk {
+            abiFilters "arm64-v8a", "x86_64"
+        }
+
         buildConfigField "String", "REACT_NATIVE_RELEASE_LEVEL", "\"${findProperty('reactNativeReleaseLevel') ?: 'stable'}\""
     }
     signingConfigs {
@@ -104,15 +117,23 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        if (releaseSigningConfigured) {
+            release {
+                storeFile file(releaseStoreFilePath)
+                storePassword releaseStorePassword
+                keyAlias releaseKeyAlias
+                keyPassword releaseKeyPassword
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            if (releaseSigningConfigured) {
+                signingConfig signingConfigs.release
+            }
             def enableShrinkResources = findProperty('android.enableShrinkResourcesInReleaseBuilds') ?: 'false'
             shrinkResources enableShrinkResources.toBoolean()
             minifyEnabled enableMinifyInReleaseBuilds
@@ -180,3 +201,10 @@ dependencies {
         implementation jscFlavor
     }
 }
+
+gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.allTasks.any { it.name.toLowerCase().contains("release") } && !releaseSigningConfigured) {
+        throw new GradleException('Production signing is not configured. Set SMARTATTEND_RELEASE_STORE_FILE, SMARTATTEND_RELEASE_STORE_PASSWORD, SMARTATTEND_RELEASE_KEY_ALIAS, and SMARTATTEND_RELEASE_KEY_PASSWORD.')
+    }
+}
+

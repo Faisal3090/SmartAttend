@@ -20,6 +20,7 @@ import { SmartAttendLogo } from '../../assets/SmartAttendLogo';
 import { Colors } from '../../constants/colors';
 import { Typography } from '../../constants/typography';
 import { Shadow, Spacing } from '../../constants/spacing';
+import { API_ROOT_URL } from '../../config/api';
 
 type TimetableItem = {
   id: number | string;
@@ -224,7 +225,7 @@ export default function TimetableScreen() {
         setError(null);
 
         const response = await fetch(
-          'http://192.168.1.3:5000/api/student/timetable',
+          `${API_ROOT_URL}/student/timetable`,
           {
             headers: {
               'Content-Type': 'application/json',
@@ -361,7 +362,7 @@ export default function TimetableScreen() {
 
           if (tokens?.accessToken) {
             fetch(
-              'http://192.168.1.3:5000/api/student/timetable',
+              `${API_ROOT_URL}/student/timetable`,
               {
                 headers: {
                   'Content-Type': 'application/json',

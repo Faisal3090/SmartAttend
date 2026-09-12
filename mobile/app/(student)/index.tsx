@@ -28,6 +28,7 @@ import { Colors } from '../../constants/colors';
 import { Typography } from '../../constants/typography';
 import { Radius, Shadow, Spacing } from '../../constants/spacing';
 import { getStudentDashboard } from '../../api/client';
+import { API_ROOT_URL } from '../../config/api';
 
 export default function StudentHomeScreen() {
   const { user, tokens } = useAuth();
@@ -55,12 +56,12 @@ React.useEffect(() => {
         getStudentDashboard(tokens.accessToken),
 
         fetch(
-          'http://192.168.1.3:5000/api/student/timetable',
+          `${API_ROOT_URL}/student/timetable`,
           { headers }
         ),
 
         fetch(
-          'http://192.168.1.3:5000/api/student/attendance',
+          `${API_ROOT_URL}/student/attendance`,
           { headers }
         ),
       ]);

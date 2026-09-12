@@ -29,22 +29,13 @@ export default function StudentProfileScreen() {
     }
 
     try {
-      const studentData = await getStudentProfile(
-        tokens.accessToken
-      );
-
-      console.log(
-        'PROFILE DATA:',
-        JSON.stringify(studentData)
-      );
-
+      const studentData = await getStudentProfile(tokens.accessToken);
       if (!studentData) {
         throw new Error('Student data missing from profile response');
       }
 
       setStudent(studentData);
     } catch (err: any) {
-      console.log('PROFILE API ERROR:', err);
       setError(err?.message || 'Failed to load profile');
     } finally {
       setLoading(false);

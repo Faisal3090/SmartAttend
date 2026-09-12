@@ -32,7 +32,7 @@ export default function AttendanceCheckScreen() {
         setStatus('Validating the attendance session...');
         const challenge = await startAttendanceChallenge(tokens.accessToken, sessionToken);
         if (!mounted) return;
-        setStatus('Signing the one-time challenge with Android Keystore...');
+        setStatus('Signing the one-time challenge with native secure key storage...');
         const signature = await DeviceCrypto.signAttendancePayload(
           challenge.challengeId,
           challenge.challenge,
@@ -66,23 +66,7 @@ export default function AttendanceCheckScreen() {
             void verifyDetectedSession(data.id);
           });
         } else {
-          // Fallback mode for Expo Go / Non-native builds:
-          setStatus('BLE radio scanning unverified. Checking for active attendance session...');
-          const activeRes = await fetch(
-            'http://192.168.1.3:5000/api/attendance/student/active-session/2',
-            {
-              headers: {
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${tokens.accessToken}`,
-              },
-            }
-          );
-          const activeData = await activeRes.json();
-          if (!activeData?.data?.active || !activeData?.data?.sessionId) {
-            throw new Error('No active attendance session found. Make sure Faculty has started live attendance.');
-          }
-
-          void verifyDetectedSession(String(activeData.data.sessionId));
+          throw new Error('Bluetooth permission is required. Attendance cannot be verified without the faculty BLE session token.');
         }
       } catch (cause) {
         fail(cause instanceof Error ? cause.message : 'Unable to start BLE scanning');
@@ -104,7 +88,7 @@ export default function AttendanceCheckScreen() {
         <Text style={styles.title}>Secure Attendance Check</Text>
         <Text style={styles.status}>{status}</Text>
         {error ? <Text style={styles.error}>{error}</Text> : null}
-        <Text style={styles.note}>Attendance is confirmed only after the server verifies this device's Android Keystore signature.</Text>
+        <Text style={styles.note}>Attendance is confirmed only after the server verifies this device's native secure-key signature.</Text>
       </View>
       <Pressable style={styles.cancel} onPress={() => router.back()}>
         <Text style={styles.cancelText}>Cancel</Text>

@@ -10,7 +10,6 @@ import {
   finalizeAttendanceSession,
   startStudentAttendanceChallenge,
   completeStudentAttendanceChallenge,
-  getStudentActiveSession,
 } from "../controllers/attendanceController.js";
 
 import { authenticate } from "../middleware/authMiddleware.js";
@@ -67,13 +66,6 @@ router.post(
   authenticate,
   authorize("FACULTY"),
   finalizeAttendanceSession,
-);
-
-router.get(
-  "/student/active-session/:classId",
-  authenticate,
-  authorize("STUDENT"),
-  getStudentActiveSession,
 );
 
 export default router;
