@@ -1,437 +1,126 @@
-/**
- * SmartAttend — Attendance Check / BLE Verification Screen
- *
- * Real flow:
- * 1. Request Bluetooth permissions
- * 2. Start student BLE scanning
- * 3. Detect faculty attendance session
- * 4. Capture Session ID + RSSI
- * 5. Stop scanning
- * 6. Continue to the next verification step
- */
-
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/colors';
+import { useAuth } from '../../auth/AuthProvider';
 import { BLEService } from '../../services/ble';
+import { DeviceCrypto } from '../../services/deviceCrypto';
+import { completeAttendanceChallenge, startAttendanceChallenge } from '../../services/api';
 
 export default function AttendanceCheckScreen() {
   const router = useRouter();
-  const params = useLocalSearchParams();
-
-  const [progress, setProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState(
-    'Requesting Bluetooth permission...'
-  );
-
-  const [bleDetected, setBleDetected] = useState(false);
-  const [sessionId, setSessionId] = useState<string | null>(
-    (params.sessionId as string) || null
-  );
-  const [rssi, setRssi] = useState<number | null>(null);
+  const { tokens } = useAuth();
+  const [status, setStatus] = useState('Requesting Bluetooth permission...');
   const [error, setError] = useState<string | null>(null);
+  const processing = useRef(false);
+  const subscription = useRef<{ remove: () => void } | null>(null);
 
   useEffect(() => {
     let mounted = true;
-    let subscription: { remove: () => void } | null = null;
-
-    const startVerification = async () => {
+    const fail = (message: string) => {
+      if (!mounted) return;
+      setError(message);
+      setStatus('Attendance verification failed');
+    };
+    const verifyDetectedSession = async (sessionToken: string) => {
+      if (processing.current || !tokens?.accessToken) return;
+      processing.current = true;
+      BLEService.stopStudentScanning();
+      subscription.current?.remove();
+      subscription.current = null;
       try {
-        console.log('SmartAttend: Starting student attendance verification');
-
-        // --------------------------------------------------
-        // STEP 1 — Bluetooth permission
-        // --------------------------------------------------
-
-        setProgress(10);
-        setCurrentStep('Requesting Bluetooth permission...');
-
-        const permissionGranted =
-          await BLEService.requestPermissions();
-
+        setStatus('Validating the attendance session...');
+        const challenge = await startAttendanceChallenge(tokens.accessToken, sessionToken);
         if (!mounted) return;
-
-        if (!permissionGranted) {
-          throw new Error(
-            'Bluetooth permission was not granted.'
-          );
-        }
-
-        console.log(
-          'SmartAttend BLE: Bluetooth permission granted'
+        setStatus('Signing the one-time challenge with Android Keystore...');
+        const signature = await DeviceCrypto.signAttendancePayload(
+          challenge.challengeId,
+          challenge.challenge,
+          challenge.sessionId,
+          challenge.studentId,
+          challenge.deviceId,
+          challenge.publicKey,
+          challenge.expiresAt,
         );
-
-        // --------------------------------------------------
-        // STEP 2 — Start BLE scanning
-        // --------------------------------------------------
-
-        setProgress(25);
-        setCurrentStep(
-          'Scanning for classroom attendance beacon...'
-        );
-
-        console.log(
-          'SmartAttend BLE: Starting student scanning'
-        );
-
-        subscription = BLEService.startStudentScanning(
-          (data) => {
-            if (!mounted) return;
-
-            console.log(
-              'SmartAttend BLE: Session detected =',
-              data.id
-            );
-
-            console.log(
-              'SmartAttend BLE: RSSI =',
-              data.rssi
-            );
-
-            setSessionId(data.id);
-            setRssi(data.rssi);
-            setBleDetected(true);
-
-            setProgress(100);
-            setCurrentStep(
-              'Classroom beacon detected successfully!'
-            );
-
-            // Stop scanning after the first valid detection.
-            BLEService.stopStudentScanning();
-
-            if (subscription) {
-              subscription.remove();
-              subscription = null;
-            }
-
-            // Continue to the next verification screen.
-            setTimeout(() => {
-              if (!mounted) return;
-
-              router.replace({
-                pathname: '/(student)/location-check',
-                params: {
-                  sessionId: data.id,
-                  rssi: String(data.rssi),
-                },
-              });
-            }, 800);
-          }
-        );
-
-        console.log(
-          'SmartAttend BLE: Student scanning started'
-        );
-
-      } catch (err) {
-        console.error(
-          'SmartAttend ATTENDANCE CHECK ERROR:',
-          err
-        );
-
+        setStatus('Submitting cryptographic attendance proof...');
+        await completeAttendanceChallenge(tokens.accessToken, {
+          challengeId: challenge.challengeId,
+          challenge: challenge.challenge,
+          signature,
+        });
         if (!mounted) return;
-
-        setError(
-          err instanceof Error
-            ? err.message
-            : 'Unable to verify attendance.'
-        );
-
-        setCurrentStep(
-          'Bluetooth verification failed.'
-        );
+        router.replace({ pathname: '/(student)/attendance-marked', params: { sessionId: String(challenge.sessionId) } });
+      } catch (cause) {
+        fail(cause instanceof Error ? cause.message : 'Unable to record attendance');
       }
     };
+    const start = async () => {
+      try {
+        if (!tokens?.accessToken) throw new Error('Authentication is required');
+        const granted = await BLEService.requestPermissions();
+        if (!mounted) return;
 
-    startVerification();
+        if (granted) {
+          setStatus('Scanning for the faculty attendance beacon...');
+          subscription.current = BLEService.startStudentScanning((data) => {
+            void verifyDetectedSession(data.id);
+          });
+        } else {
+          // Fallback mode for Expo Go / Non-native builds:
+          setStatus('BLE radio scanning unverified. Checking for active attendance session...');
+          const activeRes = await fetch(
+            'http://192.168.1.3:5000/api/attendance/student/active-session/2',
+            {
+              headers: {
+                'Content-Type': 'application/json',
+                Authorization: `Bearer ${tokens.accessToken}`,
+              },
+            }
+          );
+          const activeData = await activeRes.json();
+          if (!activeData?.data?.active || !activeData?.data?.sessionId) {
+            throw new Error('No active attendance session found. Make sure Faculty has started live attendance.');
+          }
 
+          void verifyDetectedSession(String(activeData.data.sessionId));
+        }
+      } catch (cause) {
+        fail(cause instanceof Error ? cause.message : 'Unable to start BLE scanning');
+      }
+    };
+    void start();
     return () => {
       mounted = false;
-
-      console.log(
-        'SmartAttend BLE: Cleaning up student scanning'
-      );
-
       BLEService.stopStudentScanning();
-
-      if (subscription) {
-        subscription.remove();
-      }
+      subscription.current?.remove();
+      subscription.current = null;
     };
-  }, []);
-
-  const handleCancel = () => {
-    BLEService.stopStudentScanning();
-
-    if (subscriptionSafe()) {
-      // Nothing else required.
-    }
-
-    router.back();
-  };
-
-  const subscriptionSafe = () => true;
+  }, [router, tokens?.accessToken]);
 
   return (
     <View style={styles.container}>
-      <View style={styles.content}>
-
-        <View
-          style={[
-            styles.iconCircle,
-            bleDetected && styles.iconCircleSuccess,
-          ]}
-        >
-          <Text style={styles.radarIcon}>
-            {bleDetected ? '✅' : '📡'}
-          </Text>
-        </View>
-
-        <Text style={styles.title}>
-          {bleDetected
-            ? 'Classroom Detected'
-            : 'Checking Requirements'}
-        </Text>
-
-        <Text style={styles.subtitle}>
-          {error
-            ? error
-            : bleDetected
-            ? `Attendance session ${sessionId} detected successfully.`
-            : 'Please stand near your classroom while SmartAttend verifies the attendance beacon.'}
-        </Text>
-
-        <View style={styles.progressCard}>
-          <View style={styles.progressBarBg}>
-            <View
-              style={[
-                styles.progressBarFill,
-                { width: `${progress}%` },
-              ]}
-            />
-          </View>
-
-          <Text style={styles.progressText}>
-            {progress}% Completed
-          </Text>
-
-          <Text style={styles.stepText}>
-            {currentStep}
-          </Text>
-
-          {bleDetected && (
-            <View style={styles.bleInfo}>
-              <Text style={styles.infoLabel}>
-                SESSION ID
-              </Text>
-
-              <Text style={styles.infoValue}>
-                {sessionId}
-              </Text>
-
-              <Text style={styles.infoLabel}>
-                SIGNAL STRENGTH
-              </Text>
-
-              <Text style={styles.infoValue}>
-                {rssi} dBm
-              </Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.checklist}>
-
-          <View style={styles.checkRow}>
-            <Text style={styles.checkIcon}>
-              {progress >= 25 ? '🔄' : '⏳'}
-            </Text>
-
-            <Text style={styles.checkLabel}>
-              Bluetooth / BLE Permission
-            </Text>
-          </View>
-
-          <View style={styles.checkRow}>
-            <Text style={styles.checkIcon}>
-              {bleDetected ? '✅' : '⏳'}
-            </Text>
-
-            <Text style={styles.checkLabel}>
-              Classroom Beacon Detected
-            </Text>
-          </View>
-
-          <View style={styles.checkRow}>
-            <Text style={styles.checkIcon}>
-              {bleDetected ? '🔄' : '⏳'}
-            </Text>
-
-            <Text style={styles.checkLabel}>
-              Continuing Attendance Verification
-            </Text>
-          </View>
-
-        </View>
+      <View style={styles.card}>
+        <Text style={styles.icon}>◉</Text>
+        <Text style={styles.title}>Secure Attendance Check</Text>
+        <Text style={styles.status}>{status}</Text>
+        {error ? <Text style={styles.error}>{error}</Text> : null}
+        <Text style={styles.note}>Attendance is confirmed only after the server verifies this device's Android Keystore signature.</Text>
       </View>
-
-      <Pressable
-        style={styles.cancelBtn}
-        onPress={handleCancel}
-      >
-        <Text style={styles.cancelText}>
-          Cancel Verification
-        </Text>
+      <Pressable style={styles.cancel} onPress={() => router.back()}>
+        <Text style={styles.cancelText}>Cancel</Text>
       </Pressable>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-    padding: 24,
-    justifyContent: 'space-between',
-  },
-
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-
-  iconCircle: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: '#EEF2FF',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-
-  iconCircleSuccess: {
-    backgroundColor: '#DCFCE7',
-  },
-
-  radarIcon: {
-    fontSize: 48,
-  },
-
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-
-  subtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-    lineHeight: 20,
-    marginBottom: 32,
-  },
-
-  progressCard: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    alignItems: 'center',
-    elevation: 2,
-  },
-
-  progressBarBg: {
-    width: '100%',
-    height: 10,
-    backgroundColor: '#E2E8F0',
-    borderRadius: 5,
-    overflow: 'hidden',
-    marginBottom: 12,
-  },
-
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: Colors.primary,
-    borderRadius: 5,
-  },
-
-  progressText: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.primary,
-    marginBottom: 4,
-  },
-
-  stepText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    textAlign: 'center',
-  },
-
-  bleInfo: {
-    width: '100%',
-    marginTop: 18,
-    paddingTop: 16,
-    borderTopWidth: 1,
-    borderTopColor: '#E2E8F0',
-    alignItems: 'center',
-  },
-
-  infoLabel: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: Colors.textSecondary,
-    letterSpacing: 1,
-    marginTop: 6,
-  },
-
-  infoValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    marginTop: 2,
-  },
-
-  checklist: {
-    width: '100%',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 16,
-    gap: 16,
-  },
-
-  checkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-
-  checkIcon: {
-    fontSize: 18,
-  },
-
-  checkLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.textPrimary,
-  },
-
-  cancelBtn: {
-    paddingVertical: 14,
-    alignItems: 'center',
-    marginBottom: 16,
-  },
-
-  cancelText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.error,
-  },
+  container: { flex: 1, backgroundColor: Colors.background, justifyContent: 'center', padding: 24 },
+  card: { backgroundColor: '#FFFFFF', borderRadius: 18, padding: 24, alignItems: 'center', elevation: 2 },
+  icon: { fontSize: 48, color: Colors.primary, marginBottom: 18 },
+  title: { fontSize: 22, fontWeight: '700', color: Colors.textPrimary, textAlign: 'center' },
+  status: { fontSize: 15, color: Colors.primary, textAlign: 'center', marginTop: 18, lineHeight: 22 },
+  error: { fontSize: 14, color: Colors.error, textAlign: 'center', marginTop: 14 },
+  note: { fontSize: 13, color: Colors.textSecondary, textAlign: 'center', marginTop: 22, lineHeight: 20 },
+  cancel: { padding: 16, alignItems: 'center', marginTop: 18 },
+  cancelText: { color: Colors.error, fontSize: 15, fontWeight: '600' },
 });

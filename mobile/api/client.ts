@@ -1,4 +1,4 @@
-const API_BASE_URL = 'http://192.168.6.213:5000';
+const API_BASE_URL = 'http://192.168.1.3:5000';
 
 export interface BackendLoginResponse {
   success: boolean;

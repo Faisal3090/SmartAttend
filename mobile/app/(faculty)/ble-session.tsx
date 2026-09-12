@@ -9,7 +9,7 @@ import { Colors } from '../../constants/colors';
 import { useAuth } from '../../auth/AuthProvider';
 import { BLEService } from '../../services/ble';
 
-const API_BASE_URL = 'http://192.168.6.213:5000/api';
+const API_BASE_URL = 'http://192.168.1.3:5000/api';
 
 export default function BleSessionActiveScreen() {
   const router = useRouter();
@@ -18,6 +18,7 @@ export default function BleSessionActiveScreen() {
   const { tokens } = useAuth();
 
   const sessionId = params.sessionId as string | undefined;
+  const broadcastToken = params.broadcastToken as string | undefined;
 
   const durationMinutes = parseInt(
     (params.durationMinutes as string) || '15',
@@ -33,8 +34,8 @@ export default function BleSessionActiveScreen() {
   let mounted = true;
 
   const startBle = async () => {
-    if (!sessionId) {
-      console.error('BLE ERROR: Missing session ID');
+    if (!broadcastToken) {
+      console.error('BLE ERROR: Missing opaque broadcast token');
       return;
     }
 
@@ -51,11 +52,10 @@ export default function BleSessionActiveScreen() {
         'SmartAttend BLE: Starting teacher broadcast'
       );
       console.log(
-        'SmartAttend BLE: Session ID =',
-        sessionId
+        'SmartAttend BLE: Opaque broadcast token ready'
       );
 
-      BLEService.startTeacherBroadcast(sessionId);
+      BLEService.startTeacherBroadcast(broadcastToken);
 
       console.log(
         'SmartAttend BLE: Teacher broadcast started successfully'
@@ -92,7 +92,7 @@ export default function BleSessionActiveScreen() {
 
     BLEService.stopTeacherBroadcast();
   };
-}, [sessionId]);
+}, [broadcastToken]);
 
   const formatTime = (secs: number) => {
     const m = Math.floor(secs / 60);

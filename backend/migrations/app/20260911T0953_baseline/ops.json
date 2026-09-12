@@ -1,0 +1,2161 @@
+[
+  {
+    "id": "schema.public",
+    "label": "Create schema \"public\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres"
+    },
+    "precheck": [],
+    "execute": [
+      {
+        "description": "Create schema \"public\"",
+        "sql": "CREATE SCHEMA IF NOT EXISTS \"public\"",
+        "params": []
+      }
+    ],
+    "postcheck": []
+  },
+  {
+    "id": "table.attendance",
+    "label": "Create table \"attendance\"",
+    "summary": "Creates table \"attendance\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "attendance"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"attendance\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendance\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"attendance\"",
+        "sql": "CREATE TABLE \"public\".\"attendance\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"markedAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"modifiedBy\" int4,\n  \"sessionId\" int4 NOT NULL,\n  \"source\" text NOT NULL,\n  \"status\" text NOT NULL,\n  \"studentId\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"attendance_source_check_2738bea1\" CHECK (\"source\" IN ('BLE', 'MANUAL')),\n  CONSTRAINT \"attendance_status_check_e878416c\" CHECK (\"status\" IN ('PRESENT', 'ABSENT', 'LATE'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"attendance\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendance\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.attendanceLog",
+    "label": "Create table \"attendanceLog\"",
+    "summary": "Creates table \"attendanceLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "attendanceLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"attendanceLog\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendanceLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"attendanceLog\"",
+        "sql": "CREATE TABLE \"public\".\"attendanceLog\" (\n  \"attendanceId\" int4 NOT NULL,\n  \"changedAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"changedBy\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"newStatus\" text NOT NULL,\n  \"oldStatus\" text NOT NULL,\n  \"reason\" text,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"attendanceLog_newStatus_check_264d0de3\" CHECK (\"newStatus\" IN ('PRESENT', 'ABSENT', 'LATE')),\n  CONSTRAINT \"attendanceLog_oldStatus_check_ed979520\" CHECK (\"oldStatus\" IN ('PRESENT', 'ABSENT', 'LATE'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"attendanceLog\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendanceLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.attendanceSession",
+    "label": "Create table \"attendanceSession\"",
+    "summary": "Creates table \"attendanceSession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "attendanceSession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"attendanceSession\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendanceSession\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"attendanceSession\"",
+        "sql": "CREATE TABLE \"public\".\"attendanceSession\" (\n  \"classId\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"endedAt\" timestamptz,\n  \"id\" SERIAL NOT NULL,\n  \"sessionDate\" timestamptz NOT NULL,\n  \"startedAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"attendanceSession\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendanceSession\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.class",
+    "label": "Create table \"class\"",
+    "summary": "Creates table \"class\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "class"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"class\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"class\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"class\"",
+        "sql": "CREATE TABLE \"public\".\"class\" (\n  \"academicYear\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"departmentId\" int4 NOT NULL,\n  \"facultyId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"section\" text NOT NULL,\n  \"semester\" int4 NOT NULL,\n  \"subjectId\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"class\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"class\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.department",
+    "label": "Create table \"department\"",
+    "summary": "Creates table \"department\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "department"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"department\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"department\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"department\"",
+        "sql": "CREATE TABLE \"public\".\"department\" (\n  \"code\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"name\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"department\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"department\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.enrollment",
+    "label": "Create table \"enrollment\"",
+    "summary": "Creates table \"enrollment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "enrollment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"enrollment\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"enrollment\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"enrollment\"",
+        "sql": "CREATE TABLE \"public\".\"enrollment\" (\n  \"classId\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"studentId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"enrollment\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"enrollment\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.faculty",
+    "label": "Create table \"faculty\"",
+    "summary": "Creates table \"faculty\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "faculty"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"faculty\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"faculty\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"faculty\"",
+        "sql": "CREATE TABLE \"public\".\"faculty\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"departmentId\" int4 NOT NULL,\n  \"employeeId\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"faculty\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"faculty\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.notification",
+    "label": "Create table \"notification\"",
+    "summary": "Creates table \"notification\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "notification"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"notification\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notification\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"notification\"",
+        "sql": "CREATE TABLE \"public\".\"notification\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isRead\" bool DEFAULT false NOT NULL,\n  \"message\" text NOT NULL,\n  \"title\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"notification\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notification\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.student",
+    "label": "Create table \"student\"",
+    "summary": "Creates table \"student\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "student"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"student\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"student\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"student\"",
+        "sql": "CREATE TABLE \"public\".\"student\" (\n  \"academicYear\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"departmentId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"registerNumber\" text NOT NULL,\n  \"section\" text NOT NULL,\n  \"semester\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  \"userId\" int4 NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"student\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"student\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.studentDevice",
+    "label": "Create table \"studentDevice\"",
+    "summary": "Creates table \"studentDevice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "studentDevice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"studentDevice\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"studentDevice\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"studentDevice\"",
+        "sql": "CREATE TABLE \"public\".\"studentDevice\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isActive\" bool DEFAULT true NOT NULL,\n  \"publicKey\" text NOT NULL,\n  \"studentId\" int4 NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"studentDevice\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"studentDevice\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.subject",
+    "label": "Create table \"subject\"",
+    "summary": "Creates table \"subject\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "subject"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"subject\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"subject\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"subject\"",
+        "sql": "CREATE TABLE \"public\".\"subject\" (\n  \"code\" text NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"credits\" int4 NOT NULL,\n  \"departmentId\" int4 NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"name\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"subject\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"subject\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.timetable",
+    "label": "Create table \"timetable\"",
+    "summary": "Creates table \"timetable\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "timetable"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"timetable\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"timetable\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"timetable\"",
+        "sql": "CREATE TABLE \"public\".\"timetable\" (\n  \"classId\" int4 NOT NULL,\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"dayOfWeek\" int4 NOT NULL,\n  \"endTime\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"room\" text,\n  \"startTime\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\")\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"timetable\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"timetable\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "table.user",
+    "label": "Create table \"user\"",
+    "summary": "Creates table \"user\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "table",
+        "name": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure table \"user\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create table \"user\"",
+        "sql": "CREATE TABLE \"public\".\"user\" (\n  \"createdAt\" timestamptz DEFAULT (now()) NOT NULL,\n  \"email\" text NOT NULL,\n  \"id\" SERIAL NOT NULL,\n  \"isActive\" bool DEFAULT true NOT NULL,\n  \"name\" text NOT NULL,\n  \"passwordHash\" text NOT NULL,\n  \"role\" text NOT NULL,\n  \"updatedAt\" timestamptz NOT NULL,\n  PRIMARY KEY (\"id\"),\n  CONSTRAINT \"user_role_check_868d0e90\" CHECK (\"role\" IN ('ADMIN', 'FACULTY', 'STUDENT'))\n)",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify table \"user\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.department.department_code_key",
+    "label": "Add unique constraint on \"department\" (code)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "department_code_key",
+        "table": "department"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"department_code_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "department_code_key",
+          "public",
+          "\"public\".\"department\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"department_code_key\"",
+        "sql": "ALTER TABLE \"public\".\"department\" ADD CONSTRAINT \"department_code_key\" UNIQUE (\"code\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"department_code_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "department_code_key",
+          "public",
+          "\"public\".\"department\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.faculty.faculty_userId_key",
+    "label": "Add unique constraint on \"faculty\" (userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "faculty_userId_key",
+        "table": "faculty"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"faculty_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "faculty_userId_key",
+          "public",
+          "\"public\".\"faculty\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"faculty_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"faculty\" ADD CONSTRAINT \"faculty_userId_key\" UNIQUE (\"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"faculty_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "faculty_userId_key",
+          "public",
+          "\"public\".\"faculty\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.faculty.faculty_employeeId_key",
+    "label": "Add unique constraint on \"faculty\" (employeeId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "faculty_employeeId_key",
+        "table": "faculty"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"faculty_employeeId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "faculty_employeeId_key",
+          "public",
+          "\"public\".\"faculty\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"faculty_employeeId_key\"",
+        "sql": "ALTER TABLE \"public\".\"faculty\" ADD CONSTRAINT \"faculty_employeeId_key\" UNIQUE (\"employeeId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"faculty_employeeId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "faculty_employeeId_key",
+          "public",
+          "\"public\".\"faculty\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.student.student_userId_key",
+    "label": "Add unique constraint on \"student\" (userId)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "student_userId_key",
+        "table": "student"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"student_userId_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "student_userId_key",
+          "public",
+          "\"public\".\"student\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"student_userId_key\"",
+        "sql": "ALTER TABLE \"public\".\"student\" ADD CONSTRAINT \"student_userId_key\" UNIQUE (\"userId\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"student_userId_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "student_userId_key",
+          "public",
+          "\"public\".\"student\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.student.student_registerNumber_key",
+    "label": "Add unique constraint on \"student\" (registerNumber)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "student_registerNumber_key",
+        "table": "student"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"student_registerNumber_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "student_registerNumber_key",
+          "public",
+          "\"public\".\"student\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"student_registerNumber_key\"",
+        "sql": "ALTER TABLE \"public\".\"student\" ADD CONSTRAINT \"student_registerNumber_key\" UNIQUE (\"registerNumber\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"student_registerNumber_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "student_registerNumber_key",
+          "public",
+          "\"public\".\"student\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.studentDevice.studentDevice_publicKey_key",
+    "label": "Add unique constraint on \"studentDevice\" (publicKey)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "studentDevice_publicKey_key",
+        "table": "studentDevice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"studentDevice_publicKey_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "studentDevice_publicKey_key",
+          "public",
+          "\"public\".\"studentDevice\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"studentDevice_publicKey_key\"",
+        "sql": "ALTER TABLE \"public\".\"studentDevice\" ADD CONSTRAINT \"studentDevice_publicKey_key\" UNIQUE (\"publicKey\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"studentDevice_publicKey_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "studentDevice_publicKey_key",
+          "public",
+          "\"public\".\"studentDevice\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.subject.subject_code_key",
+    "label": "Add unique constraint on \"subject\" (code)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "subject_code_key",
+        "table": "subject"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"subject_code_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "subject_code_key",
+          "public",
+          "\"public\".\"subject\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"subject_code_key\"",
+        "sql": "ALTER TABLE \"public\".\"subject\" ADD CONSTRAINT \"subject_code_key\" UNIQUE (\"code\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"subject_code_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "subject_code_key",
+          "public",
+          "\"public\".\"subject\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "unique.user.user_email_key",
+    "label": "Add unique constraint on \"user\" (email)",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "unique",
+        "name": "user_email_key",
+        "table": "user"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure constraint \"user_email_key\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add unique constraint \"user_email_key\"",
+        "sql": "ALTER TABLE \"public\".\"user\" ADD CONSTRAINT \"user_email_key\" UNIQUE (\"email\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify constraint \"user_email_key\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "user_email_key",
+          "public",
+          "\"public\".\"user\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.attendance.attendance_sessionId_idx_29f415d4",
+    "label": "Create index \"attendance_sessionId_idx_29f415d4\" on \"attendance\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "attendance_sessionId_idx_29f415d4",
+        "table": "attendance"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"attendance_sessionId_idx_29f415d4\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendance_sessionId_idx_29f415d4\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"attendance_sessionId_idx_29f415d4\"",
+        "sql": "CREATE INDEX \"attendance_sessionId_idx_29f415d4\" ON \"public\".\"attendance\" (\"sessionId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"attendance_sessionId_idx_29f415d4\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendance_sessionId_idx_29f415d4\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.attendance.attendance_studentId_idx_bf255322",
+    "label": "Create index \"attendance_studentId_idx_bf255322\" on \"attendance\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "attendance_studentId_idx_bf255322",
+        "table": "attendance"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"attendance_studentId_idx_bf255322\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendance_studentId_idx_bf255322\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"attendance_studentId_idx_bf255322\"",
+        "sql": "CREATE INDEX \"attendance_studentId_idx_bf255322\" ON \"public\".\"attendance\" (\"studentId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"attendance_studentId_idx_bf255322\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendance_studentId_idx_bf255322\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.attendanceLog.attendanceLog_attendanceId_idx_b259ff3f",
+    "label": "Create index \"attendanceLog_attendanceId_idx_b259ff3f\" on \"attendanceLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "attendanceLog_attendanceId_idx_b259ff3f",
+        "table": "attendanceLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"attendanceLog_attendanceId_idx_b259ff3f\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendanceLog_attendanceId_idx_b259ff3f\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"attendanceLog_attendanceId_idx_b259ff3f\"",
+        "sql": "CREATE INDEX \"attendanceLog_attendanceId_idx_b259ff3f\" ON \"public\".\"attendanceLog\" (\"attendanceId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"attendanceLog_attendanceId_idx_b259ff3f\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendanceLog_attendanceId_idx_b259ff3f\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.attendanceSession.attendanceSession_classId_idx_0089e5e7",
+    "label": "Create index \"attendanceSession_classId_idx_0089e5e7\" on \"attendanceSession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "attendanceSession_classId_idx_0089e5e7",
+        "table": "attendanceSession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"attendanceSession_classId_idx_0089e5e7\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendanceSession_classId_idx_0089e5e7\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"attendanceSession_classId_idx_0089e5e7\"",
+        "sql": "CREATE INDEX \"attendanceSession_classId_idx_0089e5e7\" ON \"public\".\"attendanceSession\" (\"classId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"attendanceSession_classId_idx_0089e5e7\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"attendanceSession_classId_idx_0089e5e7\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.class.class_departmentId_idx_8e261ed8",
+    "label": "Create index \"class_departmentId_idx_8e261ed8\" on \"class\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "class_departmentId_idx_8e261ed8",
+        "table": "class"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"class_departmentId_idx_8e261ed8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"class_departmentId_idx_8e261ed8\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"class_departmentId_idx_8e261ed8\"",
+        "sql": "CREATE INDEX \"class_departmentId_idx_8e261ed8\" ON \"public\".\"class\" (\"departmentId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"class_departmentId_idx_8e261ed8\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"class_departmentId_idx_8e261ed8\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.class.class_facultyId_idx_ff3b8c32",
+    "label": "Create index \"class_facultyId_idx_ff3b8c32\" on \"class\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "class_facultyId_idx_ff3b8c32",
+        "table": "class"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"class_facultyId_idx_ff3b8c32\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"class_facultyId_idx_ff3b8c32\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"class_facultyId_idx_ff3b8c32\"",
+        "sql": "CREATE INDEX \"class_facultyId_idx_ff3b8c32\" ON \"public\".\"class\" (\"facultyId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"class_facultyId_idx_ff3b8c32\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"class_facultyId_idx_ff3b8c32\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.class.class_subjectId_idx_84df2a1d",
+    "label": "Create index \"class_subjectId_idx_84df2a1d\" on \"class\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "class_subjectId_idx_84df2a1d",
+        "table": "class"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"class_subjectId_idx_84df2a1d\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"class_subjectId_idx_84df2a1d\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"class_subjectId_idx_84df2a1d\"",
+        "sql": "CREATE INDEX \"class_subjectId_idx_84df2a1d\" ON \"public\".\"class\" (\"subjectId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"class_subjectId_idx_84df2a1d\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"class_subjectId_idx_84df2a1d\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.enrollment.enrollment_classId_idx_0089e5e7",
+    "label": "Create index \"enrollment_classId_idx_0089e5e7\" on \"enrollment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "enrollment_classId_idx_0089e5e7",
+        "table": "enrollment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"enrollment_classId_idx_0089e5e7\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"enrollment_classId_idx_0089e5e7\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"enrollment_classId_idx_0089e5e7\"",
+        "sql": "CREATE INDEX \"enrollment_classId_idx_0089e5e7\" ON \"public\".\"enrollment\" (\"classId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"enrollment_classId_idx_0089e5e7\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"enrollment_classId_idx_0089e5e7\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.enrollment.enrollment_studentId_idx_bf255322",
+    "label": "Create index \"enrollment_studentId_idx_bf255322\" on \"enrollment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "enrollment_studentId_idx_bf255322",
+        "table": "enrollment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"enrollment_studentId_idx_bf255322\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"enrollment_studentId_idx_bf255322\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"enrollment_studentId_idx_bf255322\"",
+        "sql": "CREATE INDEX \"enrollment_studentId_idx_bf255322\" ON \"public\".\"enrollment\" (\"studentId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"enrollment_studentId_idx_bf255322\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"enrollment_studentId_idx_bf255322\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.faculty.faculty_departmentId_idx_8e261ed8",
+    "label": "Create index \"faculty_departmentId_idx_8e261ed8\" on \"faculty\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "faculty_departmentId_idx_8e261ed8",
+        "table": "faculty"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"faculty_departmentId_idx_8e261ed8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"faculty_departmentId_idx_8e261ed8\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"faculty_departmentId_idx_8e261ed8\"",
+        "sql": "CREATE INDEX \"faculty_departmentId_idx_8e261ed8\" ON \"public\".\"faculty\" (\"departmentId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"faculty_departmentId_idx_8e261ed8\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"faculty_departmentId_idx_8e261ed8\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.notification.notification_userId_idx_a489d58a",
+    "label": "Create index \"notification_userId_idx_a489d58a\" on \"notification\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "notification_userId_idx_a489d58a",
+        "table": "notification"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"notification_userId_idx_a489d58a\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notification_userId_idx_a489d58a\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"notification_userId_idx_a489d58a\"",
+        "sql": "CREATE INDEX \"notification_userId_idx_a489d58a\" ON \"public\".\"notification\" (\"userId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"notification_userId_idx_a489d58a\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"notification_userId_idx_a489d58a\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.student.student_departmentId_idx_8e261ed8",
+    "label": "Create index \"student_departmentId_idx_8e261ed8\" on \"student\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "student_departmentId_idx_8e261ed8",
+        "table": "student"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"student_departmentId_idx_8e261ed8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"student_departmentId_idx_8e261ed8\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"student_departmentId_idx_8e261ed8\"",
+        "sql": "CREATE INDEX \"student_departmentId_idx_8e261ed8\" ON \"public\".\"student\" (\"departmentId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"student_departmentId_idx_8e261ed8\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"student_departmentId_idx_8e261ed8\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.studentDevice.studentDevice_studentId_idx_bf255322",
+    "label": "Create index \"studentDevice_studentId_idx_bf255322\" on \"studentDevice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "studentDevice_studentId_idx_bf255322",
+        "table": "studentDevice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"studentDevice_studentId_idx_bf255322\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"studentDevice_studentId_idx_bf255322\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"studentDevice_studentId_idx_bf255322\"",
+        "sql": "CREATE INDEX \"studentDevice_studentId_idx_bf255322\" ON \"public\".\"studentDevice\" (\"studentId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"studentDevice_studentId_idx_bf255322\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"studentDevice_studentId_idx_bf255322\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.subject.subject_departmentId_idx_8e261ed8",
+    "label": "Create index \"subject_departmentId_idx_8e261ed8\" on \"subject\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "subject_departmentId_idx_8e261ed8",
+        "table": "subject"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"subject_departmentId_idx_8e261ed8\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"subject_departmentId_idx_8e261ed8\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"subject_departmentId_idx_8e261ed8\"",
+        "sql": "CREATE INDEX \"subject_departmentId_idx_8e261ed8\" ON \"public\".\"subject\" (\"departmentId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"subject_departmentId_idx_8e261ed8\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"subject_departmentId_idx_8e261ed8\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "index.timetable.timetable_classId_idx_0089e5e7",
+    "label": "Create index \"timetable_classId_idx_0089e5e7\" on \"timetable\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "index",
+        "name": "timetable_classId_idx_0089e5e7",
+        "table": "timetable"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure index \"timetable_classId_idx_0089e5e7\" does not exist",
+        "sql": "SELECT (to_regclass($1)) IS NULL AS \"result\"",
+        "params": [
+          "\"public\".\"timetable_classId_idx_0089e5e7\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "create index \"timetable_classId_idx_0089e5e7\"",
+        "sql": "CREATE INDEX \"timetable_classId_idx_0089e5e7\" ON \"public\".\"timetable\" (\"classId\")",
+        "params": []
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify index \"timetable_classId_idx_0089e5e7\" exists",
+        "sql": "SELECT (to_regclass($1)) IS NOT NULL AS \"result\"",
+        "params": [
+          "\"public\".\"timetable_classId_idx_0089e5e7\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.attendance.attendance_sessionId_fkey",
+    "label": "Add foreign key \"attendance_sessionId_fkey\" on \"attendance\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "attendance_sessionId_fkey",
+        "table": "attendance"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"attendance_sessionId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "attendance_sessionId_fkey",
+          "public",
+          "\"public\".\"attendance\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"attendance_sessionId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"attendance\"\nADD CONSTRAINT \"attendance_sessionId_fkey\"\nFOREIGN KEY (\"sessionId\")\nREFERENCES \"public\".\"attendanceSession\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"attendance_sessionId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "attendance_sessionId_fkey",
+          "public",
+          "\"public\".\"attendance\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.attendance.attendance_studentId_fkey",
+    "label": "Add foreign key \"attendance_studentId_fkey\" on \"attendance\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "attendance_studentId_fkey",
+        "table": "attendance"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"attendance_studentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "attendance_studentId_fkey",
+          "public",
+          "\"public\".\"attendance\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"attendance_studentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"attendance\"\nADD CONSTRAINT \"attendance_studentId_fkey\"\nFOREIGN KEY (\"studentId\")\nREFERENCES \"public\".\"student\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"attendance_studentId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "attendance_studentId_fkey",
+          "public",
+          "\"public\".\"attendance\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.attendanceLog.attendanceLog_attendanceId_fkey",
+    "label": "Add foreign key \"attendanceLog_attendanceId_fkey\" on \"attendanceLog\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "attendanceLog_attendanceId_fkey",
+        "table": "attendanceLog"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"attendanceLog_attendanceId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "attendanceLog_attendanceId_fkey",
+          "public",
+          "\"public\".\"attendanceLog\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"attendanceLog_attendanceId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"attendanceLog\"\nADD CONSTRAINT \"attendanceLog_attendanceId_fkey\"\nFOREIGN KEY (\"attendanceId\")\nREFERENCES \"public\".\"attendance\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"attendanceLog_attendanceId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "attendanceLog_attendanceId_fkey",
+          "public",
+          "\"public\".\"attendanceLog\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.attendanceSession.attendanceSession_classId_fkey",
+    "label": "Add foreign key \"attendanceSession_classId_fkey\" on \"attendanceSession\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "attendanceSession_classId_fkey",
+        "table": "attendanceSession"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"attendanceSession_classId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "attendanceSession_classId_fkey",
+          "public",
+          "\"public\".\"attendanceSession\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"attendanceSession_classId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"attendanceSession\"\nADD CONSTRAINT \"attendanceSession_classId_fkey\"\nFOREIGN KEY (\"classId\")\nREFERENCES \"public\".\"class\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"attendanceSession_classId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "attendanceSession_classId_fkey",
+          "public",
+          "\"public\".\"attendanceSession\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.class.class_subjectId_fkey",
+    "label": "Add foreign key \"class_subjectId_fkey\" on \"class\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "class_subjectId_fkey",
+        "table": "class"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"class_subjectId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "class_subjectId_fkey",
+          "public",
+          "\"public\".\"class\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"class_subjectId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"class\"\nADD CONSTRAINT \"class_subjectId_fkey\"\nFOREIGN KEY (\"subjectId\")\nREFERENCES \"public\".\"subject\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"class_subjectId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "class_subjectId_fkey",
+          "public",
+          "\"public\".\"class\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.class.class_facultyId_fkey",
+    "label": "Add foreign key \"class_facultyId_fkey\" on \"class\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "class_facultyId_fkey",
+        "table": "class"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"class_facultyId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "class_facultyId_fkey",
+          "public",
+          "\"public\".\"class\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"class_facultyId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"class\"\nADD CONSTRAINT \"class_facultyId_fkey\"\nFOREIGN KEY (\"facultyId\")\nREFERENCES \"public\".\"faculty\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"class_facultyId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "class_facultyId_fkey",
+          "public",
+          "\"public\".\"class\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.class.class_departmentId_fkey",
+    "label": "Add foreign key \"class_departmentId_fkey\" on \"class\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "class_departmentId_fkey",
+        "table": "class"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"class_departmentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "class_departmentId_fkey",
+          "public",
+          "\"public\".\"class\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"class_departmentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"class\"\nADD CONSTRAINT \"class_departmentId_fkey\"\nFOREIGN KEY (\"departmentId\")\nREFERENCES \"public\".\"department\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"class_departmentId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "class_departmentId_fkey",
+          "public",
+          "\"public\".\"class\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.enrollment.enrollment_studentId_fkey",
+    "label": "Add foreign key \"enrollment_studentId_fkey\" on \"enrollment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "enrollment_studentId_fkey",
+        "table": "enrollment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"enrollment_studentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "enrollment_studentId_fkey",
+          "public",
+          "\"public\".\"enrollment\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"enrollment_studentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"enrollment\"\nADD CONSTRAINT \"enrollment_studentId_fkey\"\nFOREIGN KEY (\"studentId\")\nREFERENCES \"public\".\"student\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"enrollment_studentId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "enrollment_studentId_fkey",
+          "public",
+          "\"public\".\"enrollment\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.enrollment.enrollment_classId_fkey",
+    "label": "Add foreign key \"enrollment_classId_fkey\" on \"enrollment\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "enrollment_classId_fkey",
+        "table": "enrollment"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"enrollment_classId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "enrollment_classId_fkey",
+          "public",
+          "\"public\".\"enrollment\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"enrollment_classId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"enrollment\"\nADD CONSTRAINT \"enrollment_classId_fkey\"\nFOREIGN KEY (\"classId\")\nREFERENCES \"public\".\"class\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"enrollment_classId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "enrollment_classId_fkey",
+          "public",
+          "\"public\".\"enrollment\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.faculty.faculty_userId_fkey",
+    "label": "Add foreign key \"faculty_userId_fkey\" on \"faculty\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "faculty_userId_fkey",
+        "table": "faculty"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"faculty_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "faculty_userId_fkey",
+          "public",
+          "\"public\".\"faculty\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"faculty_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"faculty\"\nADD CONSTRAINT \"faculty_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"faculty_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "faculty_userId_fkey",
+          "public",
+          "\"public\".\"faculty\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.faculty.faculty_departmentId_fkey",
+    "label": "Add foreign key \"faculty_departmentId_fkey\" on \"faculty\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "faculty_departmentId_fkey",
+        "table": "faculty"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"faculty_departmentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "faculty_departmentId_fkey",
+          "public",
+          "\"public\".\"faculty\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"faculty_departmentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"faculty\"\nADD CONSTRAINT \"faculty_departmentId_fkey\"\nFOREIGN KEY (\"departmentId\")\nREFERENCES \"public\".\"department\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"faculty_departmentId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "faculty_departmentId_fkey",
+          "public",
+          "\"public\".\"faculty\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.notification.notification_userId_fkey",
+    "label": "Add foreign key \"notification_userId_fkey\" on \"notification\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "notification_userId_fkey",
+        "table": "notification"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"notification_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "notification_userId_fkey",
+          "public",
+          "\"public\".\"notification\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"notification_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"notification\"\nADD CONSTRAINT \"notification_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"notification_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "notification_userId_fkey",
+          "public",
+          "\"public\".\"notification\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.student.student_userId_fkey",
+    "label": "Add foreign key \"student_userId_fkey\" on \"student\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "student_userId_fkey",
+        "table": "student"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"student_userId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "student_userId_fkey",
+          "public",
+          "\"public\".\"student\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"student_userId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"student\"\nADD CONSTRAINT \"student_userId_fkey\"\nFOREIGN KEY (\"userId\")\nREFERENCES \"public\".\"user\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"student_userId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "student_userId_fkey",
+          "public",
+          "\"public\".\"student\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.student.student_departmentId_fkey",
+    "label": "Add foreign key \"student_departmentId_fkey\" on \"student\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "student_departmentId_fkey",
+        "table": "student"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"student_departmentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "student_departmentId_fkey",
+          "public",
+          "\"public\".\"student\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"student_departmentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"student\"\nADD CONSTRAINT \"student_departmentId_fkey\"\nFOREIGN KEY (\"departmentId\")\nREFERENCES \"public\".\"department\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"student_departmentId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "student_departmentId_fkey",
+          "public",
+          "\"public\".\"student\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.studentDevice.studentDevice_studentId_fkey",
+    "label": "Add foreign key \"studentDevice_studentId_fkey\" on \"studentDevice\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "studentDevice_studentId_fkey",
+        "table": "studentDevice"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"studentDevice_studentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "studentDevice_studentId_fkey",
+          "public",
+          "\"public\".\"studentDevice\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"studentDevice_studentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"studentDevice\"\nADD CONSTRAINT \"studentDevice_studentId_fkey\"\nFOREIGN KEY (\"studentId\")\nREFERENCES \"public\".\"student\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"studentDevice_studentId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "studentDevice_studentId_fkey",
+          "public",
+          "\"public\".\"studentDevice\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.subject.subject_departmentId_fkey",
+    "label": "Add foreign key \"subject_departmentId_fkey\" on \"subject\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "subject_departmentId_fkey",
+        "table": "subject"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"subject_departmentId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "subject_departmentId_fkey",
+          "public",
+          "\"public\".\"subject\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"subject_departmentId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"subject\"\nADD CONSTRAINT \"subject_departmentId_fkey\"\nFOREIGN KEY (\"departmentId\")\nREFERENCES \"public\".\"department\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"subject_departmentId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "subject_departmentId_fkey",
+          "public",
+          "\"public\".\"subject\""
+        ]
+      }
+    ]
+  },
+  {
+    "id": "foreignKey.timetable.timetable_classId_fkey",
+    "label": "Add foreign key \"timetable_classId_fkey\" on \"timetable\"",
+    "operationClass": "additive",
+    "target": {
+      "id": "postgres",
+      "details": {
+        "schema": "public",
+        "objectType": "foreignKey",
+        "name": "timetable_classId_fkey",
+        "table": "timetable"
+      }
+    },
+    "precheck": [
+      {
+        "description": "ensure FK \"timetable_classId_fkey\" does not exist",
+        "sql": "SELECT NOT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "timetable_classId_fkey",
+          "public",
+          "\"public\".\"timetable\""
+        ]
+      }
+    ],
+    "execute": [
+      {
+        "description": "add FK \"timetable_classId_fkey\"",
+        "sql": "ALTER TABLE \"public\".\"timetable\"\nADD CONSTRAINT \"timetable_classId_fkey\"\nFOREIGN KEY (\"classId\")\nREFERENCES \"public\".\"class\" (\"id\")"
+      }
+    ],
+    "postcheck": [
+      {
+        "description": "verify FK \"timetable_classId_fkey\" exists",
+        "sql": "SELECT EXISTS (SELECT 1 AS \"one\" FROM \"pg_constraint\" AS \"c\" INNER JOIN \"pg_namespace\" AS \"n\" ON \"n\".\"oid\" = \"c\".\"connamespace\" WHERE (\"c\".\"conname\" = $1 AND \"n\".\"nspname\" = $2 AND \"c\".\"conrelid\" = to_regclass($3))) AS \"result\"",
+        "params": [
+          "timetable_classId_fkey",
+          "public",
+          "\"public\".\"timetable\""
+        ]
+      }
+    ]
+  }
+]

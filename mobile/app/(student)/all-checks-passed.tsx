@@ -9,7 +9,7 @@
  * 5. Navigate to attendance marked screen
  */
 
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Pressable,
   StyleSheet,
@@ -17,127 +17,16 @@ import {
   View,
   Alert,
 } from 'react-native';
-import {
-  useLocalSearchParams,
-  useRouter,
-} from 'expo-router';
 import { Colors } from '../../constants/colors';
-import { useAuth } from '../../auth/AuthProvider';
-
-const API_BASE_URL = 'http://192.168.6.213:5000/api';
+ 
 
 export default function AllChecksPassedScreen() {
-  const router = useRouter();
-  const params = useLocalSearchParams();
 
-  const { tokens } = useAuth();
-
-  const sessionId = params.sessionId as string | undefined;
-  const rssi = params.rssi as string | undefined;
-
-  const [submitting, setSubmitting] = useState(false);
-
-  const handleSubmitAttendance = async () => {
-    if (submitting) {
-      return;
-    }
-
-    if (!sessionId) {
-      Alert.alert(
-        'Attendance Error',
-        'Attendance session information is missing.'
-      );
-      return;
-    }
-
-    if (!tokens?.accessToken) {
-      Alert.alert(
-        'Login Required',
-        'Your student session has expired. Please login again.'
-      );
-      return;
-    }
-
-    try {
-      setSubmitting(true);
-
-      console.log(
-        'SmartAttend: Submitting student BLE attendance'
-      );
-
-      console.log(
-        'SmartAttend: Session ID =',
-        sessionId
-      );
-
-      console.log(
-        'SmartAttend: RSSI =',
-        rssi
-      );
-
-      const response = await fetch(
-        `${API_BASE_URL}/attendance/student/ble/verify`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${tokens.accessToken}`,
-          },
-          body: JSON.stringify({
-            sessionId: Number(sessionId),
-            rssi: rssi ? Number(rssi) : null,
-          }),
-        }
-      );
-
-      const result = await response.json();
-
-      console.log(
-        'STUDENT BLE ATTENDANCE STATUS:',
-        response.status
-      );
-
-      console.log(
-        'STUDENT BLE ATTENDANCE RESPONSE:',
-        result
-      );
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.message ||
-            'Unable to mark attendance.'
-        );
-      }
-
-      console.log(
-        'SmartAttend: Attendance marked successfully'
-      );
-
-      router.replace({
-        pathname: '/(student)/attendance-marked',
-        params: {
-          sessionId: String(sessionId),
-          attendanceId: String(
-            result.data?.attendanceId || ''
-          ),
-        },
-      });
-
-    } catch (error) {
-      console.error(
-        'STUDENT BLE ATTENDANCE ERROR:',
-        error
-      );
-
-      Alert.alert(
-        'Attendance Failed',
-        error instanceof Error
-          ? error.message
-          : 'Unable to mark attendance. Please try again.'
-      );
-
-      setSubmitting(false);
-    }
+  const handleSubmitAttendance = () => {
+    Alert.alert(
+      'Secure verification required',
+      'Start from the attendance check screen so the backend can issue and verify a one-time Keystore challenge.',
+    );
   };
 
   return (
@@ -205,31 +94,14 @@ export default function AllChecksPassedScreen() {
           </View>
         </View>
 
-        {sessionId && (
-          <Text
-            style={{
-              marginTop: 16,
-              fontSize: 12,
-              color: Colors.textSecondary,
-            }}
-          >
-            Attendance Session: {sessionId}
-          </Text>
-        )}
       </View>
 
       <Pressable
-        style={[
-          styles.markBtn,
-          submitting && styles.markBtnDisabled,
-        ]}
+        style={styles.markBtn}
         onPress={handleSubmitAttendance}
-        disabled={submitting}
       >
         <Text style={styles.markBtnText}>
-          {submitting
-            ? 'Submitting Attendance...'
-            : 'Confirm & Submit Attendance'}
+          Return to Secure Attendance Check
         </Text>
       </Pressable>
     </View>

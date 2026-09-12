@@ -1,4 +1,4 @@
-const API_BASE_URL = "http://192.168.6.213:5000/api";
+const API_BASE_URL = "http://192.168.1.3:5000/api";
 
 type ApiOptions = {
   method?: "GET" | "POST" | "PUT" | "DELETE";
@@ -37,4 +37,102 @@ export async function apiRequest<T>(
   }
 
   return data;
+}
+
+export type RegistrationChallenge = {
+  challengeId: string;
+  challenge: string;
+  studentId: number;
+  publicKey: string;
+  expiresAt: string;
+};
+
+export async function startDeviceRegistration(
+  accessToken: string,
+  publicKey: string,
+): Promise<RegistrationChallenge> {
+  const response = await apiRequest<{
+    success: boolean;
+    data: RegistrationChallenge;
+  }>('/student/device/register/start', {
+    method: 'POST',
+    token: accessToken,
+    body: { publicKey },
+  });
+
+  return response.data;
+}
+
+export async function completeDeviceRegistration(
+  accessToken: string,
+  payload: {
+    challengeId: string;
+    challenge: string;
+    publicKey: string;
+    signature: string;
+  },
+) {
+  return apiRequest<{
+    success: boolean;
+    message: string;
+    data: {
+      id: number;
+      studentId: number;
+      publicKey: string;
+      keyId: string;
+      status: string;
+    };
+  }>('/student/device/register/complete', {
+    method: 'POST',
+    token: accessToken,
+    body: payload,
+  });
+}
+
+export type AttendanceChallenge = {
+  challengeId: string;
+  challenge: string;
+  sessionId: number;
+  studentId: number;
+  deviceId: number;
+  publicKey: string;
+  algorithm: string;
+  curve: string;
+  signatureAlgorithm: string;
+  expiresAt: string;
+};
+
+export async function startAttendanceChallenge(
+  accessToken: string,
+  sessionToken: string,
+): Promise<AttendanceChallenge> {
+  const response = await apiRequest<{
+    success: boolean;
+    data: AttendanceChallenge;
+  }>('/attendance/student/ble/challenge', {
+    method: 'POST',
+    token: accessToken,
+    body: { sessionToken },
+  });
+
+  return response.data;
+}
+
+export async function completeAttendanceChallenge(
+  accessToken: string,
+  payload: {
+    challengeId: string;
+    challenge: string;
+    signature: string;
+  },
+) {
+  return apiRequest<{
+    success: boolean;
+    message: string;
+    data: { id: number; sessionId: number; studentId: number; status: string };
+  }>('/attendance/student/ble/verify', {
+    method: 'POST',
+    token: accessToken,
+    body: payload,
+  });
 }

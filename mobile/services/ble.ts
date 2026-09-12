@@ -14,24 +14,25 @@ const bleEvents = SmartAttendBLE
 
 export type BleDetection = {
   id: string;
-  rssi: number;
 };
 
 export const BLEService = {
   async requestPermissions(): Promise<boolean> {
     if (!SmartAttendBLE) {
-      throw new Error('SmartAttendBLE native module is not available');
+      console.warn('SmartAttendBLE native module is not available. Ensure you are running a native development build (npx expo run:android) rather than standard Expo Go.');
+      return false;
     }
 
     return await SmartAttendBLE.requestPermissions();
   },
 
-  startTeacherBroadcast(sessionId: string) {
+  startTeacherBroadcast(sessionToken: string) {
     if (!SmartAttendBLE) {
-      throw new Error('SmartAttendBLE native module is not available');
+      console.warn('SmartAttendBLE native module is not available. Native BLE broadcast skipped.');
+      return;
     }
 
-    SmartAttendBLE.startTeacherBroadcast(sessionId);
+    SmartAttendBLE.startTeacherBroadcast(sessionToken);
   },
 
   stopTeacherBroadcast() {
@@ -41,8 +42,9 @@ export const BLEService = {
   startStudentScanning(
     callback: (data: BleDetection) => void
   ) {
-    if (!bleEvents) {
-      throw new Error('SmartAttendBLE native module is not available');
+    if (!bleEvents || !SmartAttendBLE) {
+      console.warn('SmartAttendBLE native module is not available. Native BLE scanning skipped.');
+      return { remove: () => {} };
     }
 
     const subscription = bleEvents.addListener(
@@ -57,27 +59,6 @@ export const BLEService = {
 
   stopStudentScanning() {
     SmartAttendBLE?.stopStudentScanning();
-  },
-
-  startTeacherScanning(
-    callback: (data: BleDetection) => void
-  ) {
-    if (!bleEvents) {
-      throw new Error('SmartAttendBLE native module is not available');
-    }
-
-    const subscription = bleEvents.addListener(
-      'SmartAttendStudentDetected',
-      callback
-    );
-
-    SmartAttendBLE.startTeacherScanning();
-
-    return subscription;
-  },
-
-  stopTeacherScanning() {
-    SmartAttendBLE?.stopTeacherScanning();
   },
 
   stopAll() {

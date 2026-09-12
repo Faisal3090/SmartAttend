@@ -8,6 +8,10 @@
       "model": "Attendance",
       "namespace": "public"
     },
+    "attendanceChallenge": {
+      "model": "AttendanceChallenge",
+      "namespace": "public"
+    },
     "attendanceLog": {
       "model": "AttendanceLog",
       "namespace": "public"
@@ -36,6 +40,14 @@
       "model": "Notification",
       "namespace": "public"
     },
+    "refreshSession": {
+      "model": "RefreshSession",
+      "namespace": "public"
+    },
+    "registrationChallenge": {
+      "model": "RegistrationChallenge",
+      "namespace": "public"
+    },
     "student": {
       "model": "Student",
       "namespace": "public"
@@ -61,6 +73,23 @@
     "namespaces": {
       "public": {
         "enum": {
+          "AttendanceSessionStatus": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "ACTIVE",
+                "value": "ACTIVE"
+              },
+              {
+                "name": "CLOSED",
+                "value": "CLOSED"
+              },
+              {
+                "name": "EXPIRED",
+                "value": "EXPIRED"
+              }
+            ]
+          },
           "AttendanceSource": {
             "codecId": "pg/text@1",
             "members": [
@@ -88,6 +117,19 @@
               {
                 "name": "LATE",
                 "value": "LATE"
+              }
+            ]
+          },
+          "DeviceStatus": {
+            "codecId": "pg/text@1",
+            "members": [
+              {
+                "name": "ACTIVE",
+                "value": "ACTIVE"
+              },
+              {
+                "name": "REVOKED",
+                "value": "REVOKED"
               }
             ]
           },
@@ -269,6 +311,143 @@
               "table": "attendance"
             }
           },
+          "AttendanceChallenge": {
+            "fields": {
+              "challengeHash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "consumedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "deviceId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "expiresAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "sessionId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "studentId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "device": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "deviceId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "StudentDevice",
+                  "namespace": "public"
+                }
+              },
+              "session": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "sessionId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "AttendanceSession",
+                  "namespace": "public"
+                }
+              },
+              "student": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "studentId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Student",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "challengeHash": {
+                  "column": "challengeHash"
+                },
+                "consumedAt": {
+                  "column": "consumedAt"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "deviceId": {
+                  "column": "deviceId"
+                },
+                "expiresAt": {
+                  "column": "expiresAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "sessionId": {
+                  "column": "sessionId"
+                },
+                "studentId": {
+                  "column": "studentId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "attendanceChallenge"
+            }
+          },
           "AttendanceLog": {
             "fields": {
               "attendanceId": {
@@ -380,6 +559,13 @@
           },
           "AttendanceSession": {
             "fields": {
+              "broadcastTokenHash": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "classId": {
                 "nullable": false,
                 "type": {
@@ -395,6 +581,13 @@
                 }
               },
               "endedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "expiresAt": {
                 "nullable": true,
                 "type": {
                   "codecId": "pg/timestamptz-string@1",
@@ -422,6 +615,19 @@
                   "kind": "scalar"
                 }
               },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "AttendanceSessionStatus",
+                  "namespaceId": "public",
+                  "plane": "domain"
+                }
+              },
               "updatedAt": {
                 "nullable": false,
                 "type": {
@@ -446,6 +652,21 @@
                   "namespace": "public"
                 }
               },
+              "challenges": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "sessionId"
+                  ]
+                },
+                "to": {
+                  "model": "AttendanceChallenge",
+                  "namespace": "public"
+                }
+              },
               "class": {
                 "cardinality": "N:1",
                 "on": {
@@ -464,6 +685,9 @@
             },
             "storage": {
               "fields": {
+                "broadcastTokenHash": {
+                  "column": "broadcastTokenHash"
+                },
                 "classId": {
                   "column": "classId"
                 },
@@ -473,6 +697,9 @@
                 "endedAt": {
                   "column": "endedAt"
                 },
+                "expiresAt": {
+                  "column": "expiresAt"
+                },
                 "id": {
                   "column": "id"
                 },
@@ -481,6 +708,9 @@
                 },
                 "startedAt": {
                   "column": "startedAt"
+                },
+                "status": {
+                  "column": "status"
                 },
                 "updatedAt": {
                   "column": "updatedAt"
@@ -1100,6 +1330,225 @@
               "table": "notification"
             }
           },
+          "RefreshSession": {
+            "fields": {
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "deviceId": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "expiresAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "lastUsedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "revokedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "tokenHash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "userId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "device": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "deviceId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "StudentDevice",
+                  "namespace": "public"
+                }
+              },
+              "user": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "userId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "deviceId": {
+                  "column": "deviceId"
+                },
+                "expiresAt": {
+                  "column": "expiresAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "lastUsedAt": {
+                  "column": "lastUsedAt"
+                },
+                "revokedAt": {
+                  "column": "revokedAt"
+                },
+                "tokenHash": {
+                  "column": "tokenHash"
+                },
+                "userId": {
+                  "column": "userId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "refreshSession"
+            }
+          },
+          "RegistrationChallenge": {
+            "fields": {
+              "challengeHash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "consumedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "createdAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "expiresAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "id": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "publicKeyHash": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "studentId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              }
+            },
+            "relations": {
+              "student": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "studentId"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "Student",
+                  "namespace": "public"
+                }
+              }
+            },
+            "storage": {
+              "fields": {
+                "challengeHash": {
+                  "column": "challengeHash"
+                },
+                "consumedAt": {
+                  "column": "consumedAt"
+                },
+                "createdAt": {
+                  "column": "createdAt"
+                },
+                "expiresAt": {
+                  "column": "expiresAt"
+                },
+                "id": {
+                  "column": "id"
+                },
+                "publicKeyHash": {
+                  "column": "publicKeyHash"
+                },
+                "studentId": {
+                  "column": "studentId"
+                }
+              },
+              "namespaceId": "public",
+              "table": "registrationChallenge"
+            }
+          },
           "Student": {
             "fields": {
               "academicYear": {
@@ -1182,6 +1631,21 @@
                   "namespace": "public"
                 }
               },
+              "attendanceChallenges": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "studentId"
+                  ]
+                },
+                "to": {
+                  "model": "AttendanceChallenge",
+                  "namespace": "public"
+                }
+              },
               "department": {
                 "cardinality": "N:1",
                 "on": {
@@ -1224,6 +1688,21 @@
                 },
                 "to": {
                   "model": "Enrollment",
+                  "namespace": "public"
+                }
+              },
+              "registrationChallenges": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "studentId"
+                  ]
+                },
+                "to": {
+                  "model": "RegistrationChallenge",
                   "namespace": "public"
                 }
               },
@@ -1279,10 +1758,24 @@
           },
           "StudentDevice": {
             "fields": {
+              "algorithm": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "curve": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
                   "kind": "scalar"
                 }
               },
@@ -1300,11 +1793,66 @@
                   "kind": "scalar"
                 }
               },
+              "keyId": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "lastSeenAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
               "publicKey": {
                 "nullable": false,
                 "type": {
                   "codecId": "pg/text@1",
                   "kind": "scalar"
+                }
+              },
+              "registeredAt": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "revokedAt": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "kind": "scalar"
+                }
+              },
+              "revokedBy": {
+                "nullable": true,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
+              "signatureAlgorithm": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                }
+              },
+              "status": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/text@1",
+                  "kind": "scalar"
+                },
+                "valueSet": {
+                  "entityKind": "enum",
+                  "entityName": "DeviceStatus",
+                  "namespaceId": "public",
+                  "plane": "domain"
                 }
               },
               "studentId": {
@@ -1323,6 +1871,51 @@
               }
             },
             "relations": {
+              "attendanceChallenges": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "deviceId"
+                  ]
+                },
+                "to": {
+                  "model": "AttendanceChallenge",
+                  "namespace": "public"
+                }
+              },
+              "refreshSessions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "deviceId"
+                  ]
+                },
+                "to": {
+                  "model": "RefreshSession",
+                  "namespace": "public"
+                }
+              },
+              "revokedByUser": {
+                "cardinality": "N:1",
+                "on": {
+                  "localFields": [
+                    "revokedBy"
+                  ],
+                  "targetFields": [
+                    "id"
+                  ]
+                },
+                "to": {
+                  "model": "User",
+                  "namespace": "public"
+                }
+              },
               "student": {
                 "cardinality": "N:1",
                 "on": {
@@ -1341,8 +1934,14 @@
             },
             "storage": {
               "fields": {
+                "algorithm": {
+                  "column": "algorithm"
+                },
                 "createdAt": {
                   "column": "createdAt"
+                },
+                "curve": {
+                  "column": "curve"
                 },
                 "id": {
                   "column": "id"
@@ -1350,8 +1949,29 @@
                 "isActive": {
                   "column": "isActive"
                 },
+                "keyId": {
+                  "column": "keyId"
+                },
+                "lastSeenAt": {
+                  "column": "lastSeenAt"
+                },
                 "publicKey": {
                   "column": "publicKey"
+                },
+                "registeredAt": {
+                  "column": "registeredAt"
+                },
+                "revokedAt": {
+                  "column": "revokedAt"
+                },
+                "revokedBy": {
+                  "column": "revokedBy"
+                },
+                "signatureAlgorithm": {
+                  "column": "signatureAlgorithm"
+                },
+                "status": {
+                  "column": "status"
                 },
                 "studentId": {
                   "column": "studentId"
@@ -1585,6 +2205,13 @@
           },
           "User": {
             "fields": {
+              "authVersion": {
+                "nullable": false,
+                "type": {
+                  "codecId": "pg/int4@1",
+                  "kind": "scalar"
+                }
+              },
               "createdAt": {
                 "nullable": false,
                 "type": {
@@ -1679,6 +2306,36 @@
                   "namespace": "public"
                 }
               },
+              "refreshSessions": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "userId"
+                  ]
+                },
+                "to": {
+                  "model": "RefreshSession",
+                  "namespace": "public"
+                }
+              },
+              "revokedDevices": {
+                "cardinality": "1:N",
+                "on": {
+                  "localFields": [
+                    "id"
+                  ],
+                  "targetFields": [
+                    "revokedBy"
+                  ]
+                },
+                "to": {
+                  "model": "StudentDevice",
+                  "namespace": "public"
+                }
+              },
               "student": {
                 "cardinality": "1:1",
                 "on": {
@@ -1697,6 +2354,9 @@
             },
             "storage": {
               "fields": {
+                "authVersion": {
+                  "column": "authVersion"
+                },
                 "createdAt": {
                   "column": "createdAt"
                 },
@@ -1876,7 +2536,158 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "sessionId",
+                    "studentId"
+                  ]
+                }
+              ]
+            },
+            "attendanceChallenge": {
+              "columns": {
+                "challengeHash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "consumedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "deviceId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "expiresAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "sessionId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "studentId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "sessionId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "attendanceChallenge"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "attendanceSession"
+                  }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "studentId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "attendanceChallenge"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "student"
+                  }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "deviceId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "attendanceChallenge"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "studentDevice"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "deviceId"
+                  ],
+                  "name": "attendanceChallenge_deviceId_idx_a7d461e8",
+                  "prefix": "attendanceChallenge_deviceId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "expiresAt"
+                  ],
+                  "name": "attendanceChallenge_expiresAt_idx_6b6b8c10",
+                  "prefix": "attendanceChallenge_expiresAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "sessionId"
+                  ],
+                  "name": "attendanceChallenge_sessionId_idx_29f415d4",
+                  "prefix": "attendanceChallenge_sessionId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "studentId"
+                  ],
+                  "name": "attendanceChallenge_studentId_idx_bf255322",
+                  "prefix": "attendanceChallenge_studentId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "challengeHash"
+                  ]
+                }
+              ]
             },
             "attendanceLog": {
               "checks": [
@@ -1984,7 +2795,19 @@
               "uniques": []
             },
             "attendanceSession": {
+              "checks": [
+                {
+                  "expression": "\"status\" IN ('ACTIVE', 'CLOSED', 'EXPIRED')",
+                  "name": "attendanceSession_status_check_6dcd8770",
+                  "prefix": "attendanceSession_status_check"
+                }
+              ],
               "columns": {
+                "broadcastTokenHash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": true
+                },
                 "classId": {
                   "codecId": "pg/int4@1",
                   "nativeType": "int4",
@@ -2000,6 +2823,11 @@
                   "nullable": false
                 },
                 "endedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "expiresAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "nativeType": "timestamptz",
                   "nullable": true
@@ -2026,6 +2854,21 @@
                   },
                   "nativeType": "timestamptz",
                   "nullable": false
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "ACTIVE"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "AttendanceSessionStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "updatedAt": {
                   "codecId": "pg/timestamptz-string@1",
@@ -2059,6 +2902,22 @@
                   "name": "attendanceSession_classId_idx_0089e5e7",
                   "prefix": "attendanceSession_classId_idx",
                   "unique": false
+                },
+                {
+                  "columns": [
+                    "expiresAt"
+                  ],
+                  "name": "attendanceSession_expiresAt_idx_6b6b8c10",
+                  "prefix": "attendanceSession_expiresAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "status"
+                  ],
+                  "name": "attendanceSession_status_idx_e98638ab",
+                  "prefix": "attendanceSession_status_idx",
+                  "unique": false
                 }
               ],
               "primaryKey": {
@@ -2066,7 +2925,13 @@
                   "id"
                 ]
               },
-              "uniques": []
+              "uniques": [
+                {
+                  "columns": [
+                    "broadcastTokenHash"
+                  ]
+                }
+              ]
             },
             "class": {
               "columns": {
@@ -2536,6 +3401,237 @@
               },
               "uniques": []
             },
+            "refreshSession": {
+              "columns": {
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "deviceId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "expiresAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "expression": "autoincrement()",
+                    "kind": "function"
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
+                "lastUsedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "revokedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "tokenHash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "userId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "userId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "refreshSession"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "deviceId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "refreshSession"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "studentDevice"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "deviceId"
+                  ],
+                  "name": "refreshSession_deviceId_idx_a7d461e8",
+                  "prefix": "refreshSession_deviceId_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "expiresAt"
+                  ],
+                  "name": "refreshSession_expiresAt_idx_6b6b8c10",
+                  "prefix": "refreshSession_expiresAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "revokedAt"
+                  ],
+                  "name": "refreshSession_revokedAt_idx_f1d8e6b3",
+                  "prefix": "refreshSession_revokedAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "userId"
+                  ],
+                  "name": "refreshSession_userId_idx_a489d58a",
+                  "prefix": "refreshSession_userId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "tokenHash"
+                  ]
+                }
+              ]
+            },
+            "registrationChallenge": {
+              "columns": {
+                "challengeHash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "consumedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "createdAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "expiresAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "id": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "publicKeyHash": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "studentId": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": false
+                }
+              },
+              "foreignKeys": [
+                {
+                  "source": {
+                    "columns": [
+                      "studentId"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "registrationChallenge"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "student"
+                  }
+                }
+              ],
+              "indexes": [
+                {
+                  "columns": [
+                    "expiresAt"
+                  ],
+                  "name": "registrationChallenge_expiresAt_idx_6b6b8c10",
+                  "prefix": "registrationChallenge_expiresAt_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "publicKeyHash"
+                  ],
+                  "name": "registrationChallenge_publicKeyHash_idx_04b59335",
+                  "prefix": "registrationChallenge_publicKeyHash_idx",
+                  "unique": false
+                },
+                {
+                  "columns": [
+                    "studentId"
+                  ],
+                  "name": "registrationChallenge_studentId_idx_bf255322",
+                  "prefix": "registrationChallenge_studentId_idx",
+                  "unique": false
+                }
+              ],
+              "primaryKey": {
+                "columns": [
+                  "id"
+                ]
+              },
+              "uniques": [
+                {
+                  "columns": [
+                    "challengeHash"
+                  ]
+                }
+              ]
+            },
             "student": {
               "columns": {
                 "academicYear": {
@@ -2655,7 +3751,23 @@
               ]
             },
             "studentDevice": {
+              "checks": [
+                {
+                  "expression": "\"status\" IN ('ACTIVE', 'REVOKED')",
+                  "name": "studentDevice_status_check_35f03e2c",
+                  "prefix": "studentDevice_status_check"
+                }
+              ],
               "columns": {
+                "algorithm": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "EC"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "default": {
@@ -2663,6 +3775,15 @@
                     "kind": "function"
                   },
                   "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "curve": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "P-256"
+                  },
+                  "nativeType": "text",
                   "nullable": false
                 },
                 "id": {
@@ -2683,10 +3804,63 @@
                   "nativeType": "bool",
                   "nullable": false
                 },
+                "keyId": {
+                  "codecId": "pg/text@1",
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "lastSeenAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
                 "publicKey": {
                   "codecId": "pg/text@1",
                   "nativeType": "text",
                   "nullable": false
+                },
+                "registeredAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "default": {
+                    "expression": "now()",
+                    "kind": "function"
+                  },
+                  "nativeType": "timestamptz",
+                  "nullable": false
+                },
+                "revokedAt": {
+                  "codecId": "pg/timestamptz-string@1",
+                  "nativeType": "timestamptz",
+                  "nullable": true
+                },
+                "revokedBy": {
+                  "codecId": "pg/int4@1",
+                  "nativeType": "int4",
+                  "nullable": true
+                },
+                "signatureAlgorithm": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "SHA256withECDSA"
+                  },
+                  "nativeType": "text",
+                  "nullable": false
+                },
+                "status": {
+                  "codecId": "pg/text@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": "ACTIVE"
+                  },
+                  "nativeType": "text",
+                  "nullable": false,
+                  "valueSet": {
+                    "entityKind": "valueSet",
+                    "entityName": "DeviceStatus",
+                    "namespaceId": "public",
+                    "plane": "storage"
+                  }
                 },
                 "studentId": {
                   "codecId": "pg/int4@1",
@@ -2715,6 +3889,22 @@
                     "namespaceId": "public",
                     "tableName": "student"
                   }
+                },
+                {
+                  "source": {
+                    "columns": [
+                      "revokedBy"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "studentDevice"
+                  },
+                  "target": {
+                    "columns": [
+                      "id"
+                    ],
+                    "namespaceId": "public",
+                    "tableName": "user"
+                  }
                 }
               ],
               "indexes": [
@@ -2722,8 +3912,17 @@
                   "columns": [
                     "studentId"
                   ],
-                  "name": "studentDevice_studentId_idx_bf255322",
-                  "prefix": "studentDevice_studentId_idx",
+                  "name": "studentDevice_one_active_per_student_87677287",
+                  "prefix": "studentDevice_one_active_per_student",
+                  "unique": true,
+                  "where": "(\"status\" = 'ACTIVE')"
+                },
+                {
+                  "columns": [
+                    "revokedBy"
+                  ],
+                  "name": "studentDevice_revokedBy_idx_dd582028",
+                  "prefix": "studentDevice_revokedBy_idx",
                   "unique": false
                 }
               ],
@@ -2736,6 +3935,11 @@
                 {
                   "columns": [
                     "publicKey"
+                  ]
+                },
+                {
+                  "columns": [
+                    "keyId"
                   ]
                 }
               ]
@@ -2922,6 +4126,15 @@
                 }
               ],
               "columns": {
+                "authVersion": {
+                  "codecId": "pg/int4@1",
+                  "default": {
+                    "kind": "literal",
+                    "value": 1
+                  },
+                  "nativeType": "int4",
+                  "nullable": false
+                },
                 "createdAt": {
                   "codecId": "pg/timestamptz-string@1",
                   "default": {
@@ -2998,6 +4211,14 @@
             }
           },
           "valueSet": {
+            "AttendanceSessionStatus": {
+              "kind": "valueSet",
+              "values": [
+                "ACTIVE",
+                "CLOSED",
+                "EXPIRED"
+              ]
+            },
             "AttendanceSource": {
               "kind": "valueSet",
               "values": [
@@ -3011,6 +4232,13 @@
                 "PRESENT",
                 "ABSENT",
                 "LATE"
+              ]
+            },
+            "DeviceStatus": {
+              "kind": "valueSet",
+              "values": [
+                "ACTIVE",
+                "REVOKED"
               ]
             },
             "UserRole": {
@@ -3027,10 +4255,10 @@
         "kind": "postgres-schema"
       }
     },
-    "storageHash": "5354a51ca6802dcef022b269fe5e114eaeb3794507e39206153e7fe35fd06aa4"
+    "storageHash": "ecf85e094df2632133fba9bab1f56bd3e65dea8a518e1d439561ea2470384515"
   },
   "execution": {
-    "executionHash": "b016bb1982981c5e0232d7ebb78cd7ccd2f0855e0b56c9c9b8ea1dd124a0ecc2",
+    "executionHash": "98aadb2da9e62087cdab9c53a4d2fc53504872a3feb3ef03efc25b361c165a86",
     "mutations": {
       "defaults": [
         {
@@ -3046,6 +4274,17 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "attendance"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "attendanceChallenge"
           }
         },
         {
@@ -3125,6 +4364,17 @@
         },
         {
           "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "id",
+            "namespace": "public",
+            "table": "registrationChallenge"
+          }
+        },
+        {
+          "onCreate": {
             "id": "timestampNow",
             "kind": "generator"
           },
@@ -3136,6 +4386,17 @@
             "column": "updatedAt",
             "namespace": "public",
             "table": "student"
+          }
+        },
+        {
+          "onCreate": {
+            "id": "uuidv4",
+            "kind": "generator"
+          },
+          "ref": {
+            "column": "keyId",
+            "namespace": "public",
+            "table": "studentDevice"
           }
         },
         {

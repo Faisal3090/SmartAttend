@@ -8,8 +8,8 @@ import {
   getAttendanceSession,
   getSessionParticipants,
   finalizeAttendanceSession,
-  verifyBleAttendance,
-  verifyStudentBleAttendance,
+  startStudentAttendanceChallenge,
+  completeStudentAttendanceChallenge,
   getStudentActiveSession,
 } from "../controllers/attendanceController.js";
 
@@ -25,17 +25,17 @@ router.get("/", getAttendance);
 router.post("/", authenticate, authorize("FACULTY"), markAttendance);
 
 router.post(
-  "/ble/verify",
+  "/student/ble/challenge",
   authenticate,
-  authorize("FACULTY"),
-  verifyBleAttendance,
+  authorize("STUDENT"),
+  startStudentAttendanceChallenge,
 );
 
 router.post(
   "/student/ble/verify",
   authenticate,
   authorize("STUDENT"),
-  verifyStudentBleAttendance,
+  completeStudentAttendanceChallenge,
 );
 
 router.put("/:id", authenticate, authorize("FACULTY"), updateAttendance);

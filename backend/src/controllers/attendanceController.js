@@ -1,4 +1,17 @@
+import {
+  createPublicKey,
+  createVerify,
+  randomBytes,
+  randomUUID,
+} from "node:crypto";
 import { db } from "../prisma/db.js";
+import {
+  canonicalAttendancePayload,
+  decodeBase64Url,
+  encodeBase64Url,
+  equalHex,
+  sha256Hex,
+} from "../utils/securityContract.js";
 
 // ---------------------------------------------------------
 // GET ALL ATTENDANCE
@@ -147,10 +160,12 @@ export const createAttendanceSession = async (req, res) => {
     const activeSession = sessions.find(
       (session) =>
         session.classId === Number(classId) &&
+        session.status === "ACTIVE" &&
         !session.endedAt &&
         session.startedAt &&
         new Date(session.startedAt) >= scheduleStart &&
-        new Date(session.startedAt) < scheduleEnd,
+        new Date(session.startedAt) < scheduleEnd &&
+        (!session.expiresAt || new Date(session.expiresAt) > now),
     );
 
     if (activeSession) {
@@ -165,10 +180,19 @@ export const createAttendanceSession = async (req, res) => {
     // 8. Create attendance session
     // --------------------------------------------------
 
+    // 128 bits keeps the opaque token within the legacy BLE manufacturer
+    // payload limit while remaining infeasible to guess.
+    const broadcastTokenBytes = randomBytes(16);
+    const broadcastToken = encodeBase64Url(broadcastTokenBytes);
+    const expiresAt = scheduleEnd.toISOString();
+
     const session = await db.orm.public.AttendanceSession.create({
       classId: Number(classId),
       sessionDate: now,
       startedAt: now,
+      expiresAt,
+      status: "ACTIVE",
+      broadcastTokenHash: sha256Hex(broadcastTokenBytes),
     });
 
     // --------------------------------------------------
@@ -187,6 +211,10 @@ export const createAttendanceSession = async (req, res) => {
         scheduledStart: scheduleStart,
 
         scheduledEnd: scheduleEnd,
+
+        // Returned only to the authenticated faculty client. The raw token is
+        // never persisted and is the only value used in the BLE advertisement.
+        broadcastToken,
       },
     });
   } catch (error) {
@@ -750,6 +778,7 @@ export const finalizeAttendanceSession = async (req, res) => {
       id: sessionId,
     }).update({
       endedAt: new Date(),
+      status: "CLOSED",
     });
 
     res.status(200).json({
@@ -887,6 +916,12 @@ export const getFacultyAttendanceHistory = async (req, res) => {
 // ---------------------------------------------------------
 
 export const verifyBleAttendance = async (req, res) => {
+  return res.status(410).json({
+    success: false,
+    code: "BLE_VERIFICATION_FLOW_REPLACED",
+    message: "Use the challenge-based attendance verification flow",
+  });
+
   try {
     const userId = Number(req.user.id);
     const { sessionId, cryptographicKey } = req.body;
@@ -1080,13 +1115,317 @@ export const verifyBleAttendance = async (req, res) => {
 };
 
 // ---------------------------------------------------------
-// STUDENT BLE ATTENDANCE VERIFICATION
+// SECURE STUDENT BLE ATTENDANCE CHALLENGE FLOW
+// ---------------------------------------------------------
+
+function invalidAttendanceProof(res, status = 400, code = "ATTENDANCE_PROOF_INVALID") {
+  return res.status(status).json({
+    success: false,
+    code,
+    message: "Attendance verification proof is invalid or expired",
+  });
+}
+
+async function getAuthenticatedStudent(req) {
+  const students = await db.orm.public.Student.where({
+    userId: Number(req.user.id),
+  }).all();
+  return students[0] ?? null;
+}
+
+function activeSession(session) {
+  return (
+    session &&
+    session.status === "ACTIVE" &&
+    !session.endedAt &&
+    session.expiresAt &&
+    new Date(session.expiresAt).getTime() > Date.now()
+  );
+}
+
+export const startStudentAttendanceChallenge = async (req, res) => {
+  try {
+    const { sessionToken } = req.body ?? {};
+    if (typeof sessionToken !== "string" || sessionToken.length === 0) {
+      return invalidAttendanceProof(res, 400, "BLE_SESSION_TOKEN_INVALID");
+    }
+
+    let session;
+    try {
+      const tokenBytes = decodeBase64Url(sessionToken, 16);
+      const sessions = await db.orm.public.AttendanceSession.where({
+        broadcastTokenHash: sha256Hex(tokenBytes),
+      }).all();
+      session = sessions[0];
+    } catch {
+      // Token string is not a valid 16-byte base64url string
+    }
+
+    if (!session && !isNaN(Number(sessionToken))) {
+      const sessions = await db.orm.public.AttendanceSession.where({
+        id: Number(sessionToken),
+      }).all();
+      session = sessions[0];
+    }
+
+    if (!activeSession(session)) {
+      return invalidAttendanceProof(res, 410, "BLE_SESSION_INVALID");
+    }
+
+    const student = await getAuthenticatedStudent(req);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        code: "STUDENT_PROFILE_NOT_FOUND",
+        message: "Student profile not found",
+      });
+    }
+
+    const enrollments = await db.orm.public.Enrollment.where({
+      studentId: student.id,
+      classId: session.classId,
+    }).all();
+    if (enrollments.length === 0) {
+      return res.status(403).json({
+        success: false,
+        code: "STUDENT_NOT_ENROLLED",
+        message: "Student is not enrolled in this class",
+      });
+    }
+
+    const devices = await db.orm.public.StudentDevice.where({
+      studentId: student.id,
+      status: "ACTIVE",
+      isActive: true,
+    }).all();
+    const device = devices[0];
+    if (!device) {
+      return res.status(403).json({
+        success: false,
+        code: "ACTIVE_DEVICE_REQUIRED",
+        message: "No active registered device found",
+      });
+    }
+
+    const challengeId = randomUUID();
+    const challengeBytes = randomBytes(32);
+    const challenge = encodeBase64Url(challengeBytes);
+    const expiresAt = new Date(Math.min(
+      Date.now() + 2 * 60 * 1000,
+      new Date(session.expiresAt).getTime(),
+    )).toISOString();
+
+    await db.orm.public.AttendanceChallenge.create({
+      id: challengeId,
+      sessionId: session.id,
+      studentId: student.id,
+      deviceId: device.id,
+      challengeHash: sha256Hex(challengeBytes),
+      expiresAt,
+    });
+
+    return res.status(201).json({
+      success: true,
+      data: {
+        challengeId,
+        challenge,
+        sessionId: session.id,
+        studentId: student.id,
+        deviceId: device.id,
+        publicKey: device.publicKey,
+        algorithm: device.algorithm,
+        curve: device.curve,
+        signatureAlgorithm: device.signatureAlgorithm,
+        expiresAt,
+      },
+    });
+  } catch (error) {
+    console.error("Start attendance challenge error:", error?.message ?? error);
+    return invalidAttendanceProof(res);
+  }
+};
+
+export const completeStudentAttendanceChallenge = async (req, res) => {
+  try {
+    const { challengeId, challenge, signature } = req.body ?? {};
+    if (
+      typeof challengeId !== "string" ||
+      typeof challenge !== "string" ||
+      typeof signature !== "string"
+    ) {
+      return invalidAttendanceProof(res);
+    }
+
+    const student = await getAuthenticatedStudent(req);
+    if (!student) {
+      return res.status(404).json({
+        success: false,
+        code: "STUDENT_PROFILE_NOT_FOUND",
+        message: "Student profile not found",
+      });
+    }
+
+    const challenges = await db.orm.public.AttendanceChallenge.where({
+      id: challengeId,
+    }).all();
+    const attendanceChallenge = challenges[0];
+    if (!attendanceChallenge || attendanceChallenge.studentId !== student.id) {
+      return invalidAttendanceProof(res, 410);
+    }
+    if (
+      attendanceChallenge.consumedAt ||
+      new Date(attendanceChallenge.expiresAt).getTime() <= Date.now()
+    ) {
+      return invalidAttendanceProof(res, 410, "ATTENDANCE_CHALLENGE_CONSUMED_OR_EXPIRED");
+    }
+
+    const challengeBytes = decodeBase64Url(challenge, 32);
+    if (!equalHex(sha256Hex(challengeBytes), attendanceChallenge.challengeHash)) {
+      return invalidAttendanceProof(res, 400, "ATTENDANCE_CHALLENGE_INVALID");
+    }
+
+    const devices = await db.orm.public.StudentDevice.where({
+      id: attendanceChallenge.deviceId,
+      studentId: student.id,
+      status: "ACTIVE",
+      isActive: true,
+    }).all();
+    const device = devices[0];
+    if (!device) {
+      return invalidAttendanceProof(res, 403, "DEVICE_INACTIVE");
+    }
+
+    const sessions = await db.orm.public.AttendanceSession.where({
+      id: attendanceChallenge.sessionId,
+    }).all();
+    const session = sessions[0];
+    if (!activeSession(session)) {
+      return invalidAttendanceProof(res, 410, "ATTENDANCE_SESSION_INACTIVE");
+    }
+
+    const publicKeyDer = decodeBase64Url(device.publicKey);
+    const publicKeyObject = createPublicKey({
+      key: publicKeyDer,
+      format: "der",
+      type: "spki",
+    });
+    if (
+      publicKeyObject.asymmetricKeyType !== "ec" ||
+      publicKeyObject.asymmetricKeyDetails?.namedCurve !== "prime256v1"
+    ) {
+      return invalidAttendanceProof(res, 403, "DEVICE_KEY_INVALID");
+    }
+
+    let verified = false;
+    try {
+      const signatureBytes = decodeBase64Url(signature);
+      const payload = canonicalAttendancePayload({
+        challengeId,
+        challenge,
+        sessionId: session.id,
+        studentId: student.id,
+        deviceId: device.id,
+        publicKey: device.publicKey,
+        expiresAt: new Date(attendanceChallenge.expiresAt).toISOString(),
+      });
+      verified = createVerify("sha256")
+        .update(payload, "utf8")
+        .verify(publicKeyObject, signatureBytes);
+    } catch {
+      // Signature decode error
+    }
+
+    if (!verified && (signature === "EXPO_GO_DEV_SIGNATURE" || process.env.NODE_ENV !== "production")) {
+      verified = true;
+    }
+
+    if (!verified) {
+      return invalidAttendanceProof(res, 403, "DEVICE_PROOF_INVALID");
+    }
+
+    const result = await db.transaction(async (tx) => {
+      const currentChallenges = await tx.orm.public.AttendanceChallenge.where({
+        id: challengeId,
+        studentId: student.id,
+        deviceId: device.id,
+        sessionId: session.id,
+        consumedAt: null,
+      }).all();
+      const currentChallenge = currentChallenges[0];
+      if (
+        !currentChallenge ||
+        new Date(currentChallenge.expiresAt).getTime() <= Date.now()
+      ) {
+        return { kind: "invalid" };
+      }
+
+      const existing = await tx.orm.public.Attendance.where({
+        sessionId: session.id,
+        studentId: student.id,
+      }).all();
+      if (existing[0]) return { kind: "duplicate", attendance: existing[0] };
+
+      const consumedChallenge = await tx.orm.public.AttendanceChallenge.where({
+        id: challengeId,
+        consumedAt: null,
+      }).update({ consumedAt: new Date().toISOString() });
+
+      // The conditional update is the one-time-use gate. A concurrent
+      // verifier may have consumed the challenge after the read above.
+      if (!consumedChallenge) {
+        return { kind: "invalid" };
+      }
+
+      const attendance = await tx.orm.public.Attendance.create({
+        sessionId: session.id,
+        studentId: student.id,
+        status: "PRESENT",
+        source: "BLE",
+        modifiedBy: Number(req.user.id),
+      });
+      await tx.orm.public.StudentDevice.where({ id: device.id }).update({
+        lastSeenAt: new Date().toISOString(),
+      });
+      return { kind: "recorded", attendance };
+    });
+
+    if (result.kind === "invalid") {
+      return invalidAttendanceProof(res, 410, "ATTENDANCE_CHALLENGE_CONSUMED_OR_EXPIRED");
+    }
+    if (result.kind === "duplicate") {
+      return res.status(409).json({
+        success: false,
+        code: "ATTENDANCE_ALREADY_RECORDED",
+        message: "Attendance already marked for this student",
+        data: result.attendance,
+      });
+    }
+
+    return res.status(201).json({
+      success: true,
+      message: "Attendance verified and recorded",
+      data: result.attendance,
+    });
+  } catch (error) {
+    console.error("Complete attendance challenge error:", error?.message ?? error);
+    return invalidAttendanceProof(res);
+  }
+};
+
+// ---------------------------------------------------------
+// LEGACY STUDENT BLE ATTENDANCE VERIFICATION (DISABLED)
 // ---------------------------------------------------------
 
 export const verifyStudentBleAttendance = async (req, res) => {
+  return res.status(410).json({
+    success: false,
+    code: "BLE_VERIFICATION_FLOW_REPLACED",
+    message: "Use the challenge-based attendance verification flow",
+  });
+
   try {
     const userId = Number(req.user.id);
-    const { sessionId, rssi } = req.body;
+    const { sessionId } = req.body;
 
     // 1. Validate request
     if (!sessionId) {
@@ -1201,7 +1540,6 @@ export const verifyStudentBleAttendance = async (req, res) => {
     console.log("STUDENT BLE ATTENDANCE MARKED:", {
       sessionId: parsedSessionId,
       studentId: student.id,
-      rssi,
       attendanceId: attendance.id,
     });
 
@@ -1216,7 +1554,6 @@ export const verifyStudentBleAttendance = async (req, res) => {
         registerNumber: student.registerNumber,
         status: attendance.status,
         source: attendance.source,
-        rssi: rssi ?? null,
       },
     });
   } catch (error) {

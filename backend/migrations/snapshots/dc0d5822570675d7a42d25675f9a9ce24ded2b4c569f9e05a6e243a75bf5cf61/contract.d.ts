@@ -33,9 +33,9 @@ import type {
 } from '@prisma/orm-postgres/contract/types';
 
 export type StorageHash =
-  StorageHashBase<'ecf85e094df2632133fba9bab1f56bd3e65dea8a518e1d439561ea2470384515'>;
+  StorageHashBase<'dc0d5822570675d7a42d25675f9a9ce24ded2b4c569f9e05a6e243a75bf5cf61'>;
 export type ExecutionHash =
-  ExecutionHashBase<'98aadb2da9e62087cdab9c53a4d2fc53504872a3feb3ef03efc25b361c165a86'>;
+  ExecutionHashBase<'3975649e09bcab9eb5fdb102a60699e3479a96356a3f65e3b39441c479db2c19'>;
 export type ProfileHash =
   ProfileHashBase<'3916f444a8a17ad749191acf9e08dad97d1a327b88c2f1d45d12f240296aa8b2'>;
 
@@ -334,15 +334,6 @@ export type FieldOutputTypes = {
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
       readonly lastUsedAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
     };
-    readonly RegistrationChallenge: {
-      readonly id: CodecTypes['pg/text@1']['output'];
-      readonly studentId: CodecTypes['pg/int4@1']['output'];
-      readonly publicKeyHash: CodecTypes['pg/text@1']['output'];
-      readonly challengeHash: CodecTypes['pg/text@1']['output'];
-      readonly expiresAt: CodecTypes['pg/timestamptz-string@1']['output'];
-      readonly consumedAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
-      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
-    };
     readonly Student: {
       readonly id: CodecTypes['pg/int4@1']['output'];
       readonly userId: CodecTypes['pg/int4@1']['output'];
@@ -497,15 +488,6 @@ export type FieldInputTypes = {
       readonly revokedAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
       readonly lastUsedAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
-    };
-    readonly RegistrationChallenge: {
-      readonly id: CodecTypes['pg/text@1']['input'];
-      readonly studentId: CodecTypes['pg/int4@1']['input'];
-      readonly publicKeyHash: CodecTypes['pg/text@1']['input'];
-      readonly challengeHash: CodecTypes['pg/text@1']['input'];
-      readonly expiresAt: CodecTypes['pg/timestamptz-string@1']['input'];
-      readonly consumedAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
-      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
     };
     readonly Student: {
       readonly id: CodecTypes['pg/int4@1']['input'];
@@ -662,15 +644,6 @@ export type StorageColumnTypes = {
       readonly tokenHash: CodecTypes['pg/text@1']['output'];
       readonly userId: CodecTypes['pg/int4@1']['output'];
     };
-    readonly registrationChallenge: {
-      readonly challengeHash: CodecTypes['pg/text@1']['output'];
-      readonly consumedAt: CodecTypes['pg/timestamptz-string@1']['output'] | null;
-      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
-      readonly expiresAt: CodecTypes['pg/timestamptz-string@1']['output'];
-      readonly id: CodecTypes['pg/text@1']['output'];
-      readonly publicKeyHash: CodecTypes['pg/text@1']['output'];
-      readonly studentId: CodecTypes['pg/int4@1']['output'];
-    };
     readonly student: {
       readonly academicYear: CodecTypes['pg/text@1']['output'];
       readonly createdAt: CodecTypes['pg/timestamptz-string@1']['output'];
@@ -825,15 +798,6 @@ export type StorageColumnInputTypes = {
       readonly revokedAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
       readonly tokenHash: CodecTypes['pg/text@1']['input'];
       readonly userId: CodecTypes['pg/int4@1']['input'];
-    };
-    readonly registrationChallenge: {
-      readonly challengeHash: CodecTypes['pg/text@1']['input'];
-      readonly consumedAt: CodecTypes['pg/timestamptz-string@1']['input'] | null;
-      readonly createdAt: CodecTypes['pg/timestamptz-string@1']['input'];
-      readonly expiresAt: CodecTypes['pg/timestamptz-string@1']['input'];
-      readonly id: CodecTypes['pg/text@1']['input'];
-      readonly publicKeyHash: CodecTypes['pg/text@1']['input'];
-      readonly studentId: CodecTypes['pg/int4@1']['input'];
     };
     readonly student: {
       readonly academicYear: CodecTypes['pg/text@1']['input'];
@@ -1765,82 +1729,6 @@ type ContractBase = Omit<
                 },
               ];
             };
-            readonly registrationChallenge: {
-              columns: {
-                readonly id: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                };
-                readonly studentId: {
-                  readonly nativeType: 'int4';
-                  readonly codecId: 'pg/int4@1';
-                  readonly nullable: false;
-                };
-                readonly publicKeyHash: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                };
-                readonly challengeHash: {
-                  readonly nativeType: 'text';
-                  readonly codecId: 'pg/text@1';
-                  readonly nullable: false;
-                };
-                readonly expiresAt: {
-                  readonly nativeType: 'timestamptz';
-                  readonly codecId: 'pg/timestamptz-string@1';
-                  readonly nullable: false;
-                };
-                readonly consumedAt: {
-                  readonly nativeType: 'timestamptz';
-                  readonly codecId: 'pg/timestamptz-string@1';
-                  readonly nullable: true;
-                };
-                readonly createdAt: {
-                  readonly nativeType: 'timestamptz';
-                  readonly codecId: 'pg/timestamptz-string@1';
-                  readonly nullable: false;
-                  readonly default: { readonly kind: 'function'; readonly expression: 'now()' };
-                };
-              };
-              primaryKey: { readonly columns: readonly ['id'] };
-              uniques: readonly [{ readonly columns: readonly ['challengeHash'] }];
-              indexes: readonly [
-                {
-                  readonly name: 'registrationChallenge_studentId_idx_bf255322';
-                  readonly prefix: 'registrationChallenge_studentId_idx';
-                  readonly columns: readonly ['studentId'];
-                  readonly unique: false;
-                },
-                {
-                  readonly name: 'registrationChallenge_publicKeyHash_idx_04b59335';
-                  readonly prefix: 'registrationChallenge_publicKeyHash_idx';
-                  readonly columns: readonly ['publicKeyHash'];
-                  readonly unique: false;
-                },
-                {
-                  readonly name: 'registrationChallenge_expiresAt_idx_6b6b8c10';
-                  readonly prefix: 'registrationChallenge_expiresAt_idx';
-                  readonly columns: readonly ['expiresAt'];
-                  readonly unique: false;
-                },
-              ];
-              foreignKeys: readonly [
-                {
-                  readonly source: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'registrationChallenge';
-                    readonly columns: readonly ['studentId'];
-                  };
-                  readonly target: {
-                    readonly namespaceId: 'public' & NamespaceId;
-                    readonly tableName: 'student';
-                    readonly columns: readonly ['id'];
-                  };
-                },
-              ];
-            };
             readonly student: {
               columns: {
                 readonly id: {
@@ -2354,10 +2242,6 @@ type ContractBase = Omit<
     readonly attendanceChallenge: {
       readonly namespace: 'public' & NamespaceId;
       readonly model: 'AttendanceChallenge';
-    };
-    readonly registrationChallenge: {
-      readonly namespace: 'public' & NamespaceId;
-      readonly model: 'RegistrationChallenge';
     };
     readonly refreshSession: {
       readonly namespace: 'public' & NamespaceId;
@@ -3238,73 +3122,6 @@ type ContractBase = Omit<
               };
             };
           };
-          readonly RegistrationChallenge: {
-            readonly fields: {
-              readonly id: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly studentId: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/int4@1' };
-              };
-              readonly publicKeyHash: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly challengeHash: {
-                readonly nullable: false;
-                readonly type: { readonly kind: 'scalar'; readonly codecId: 'pg/text@1' };
-              };
-              readonly expiresAt: {
-                readonly nullable: false;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamptz-string@1';
-                };
-              };
-              readonly consumedAt: {
-                readonly nullable: true;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamptz-string@1';
-                };
-              };
-              readonly createdAt: {
-                readonly nullable: false;
-                readonly type: {
-                  readonly kind: 'scalar';
-                  readonly codecId: 'pg/timestamptz-string@1';
-                };
-              };
-            };
-            readonly relations: {
-              readonly student: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'Student';
-                };
-                readonly cardinality: 'N:1';
-                readonly on: {
-                  readonly localFields: readonly ['studentId'];
-                  readonly targetFields: readonly ['id'];
-                };
-              };
-            };
-            readonly storage: {
-              readonly table: 'registrationChallenge';
-              readonly namespaceId: 'public';
-              readonly fields: {
-                readonly id: { readonly column: 'id' };
-                readonly studentId: { readonly column: 'studentId' };
-                readonly publicKeyHash: { readonly column: 'publicKeyHash' };
-                readonly challengeHash: { readonly column: 'challengeHash' };
-                readonly expiresAt: { readonly column: 'expiresAt' };
-                readonly consumedAt: { readonly column: 'consumedAt' };
-                readonly createdAt: { readonly column: 'createdAt' };
-              };
-            };
-          };
           readonly Student: {
             readonly fields: {
               readonly id: {
@@ -3399,17 +3216,6 @@ type ContractBase = Omit<
                 readonly to: {
                   readonly namespace: 'public' & NamespaceId;
                   readonly model: 'Enrollment';
-                };
-                readonly cardinality: '1:N';
-                readonly on: {
-                  readonly localFields: readonly ['id'];
-                  readonly targetFields: readonly ['studentId'];
-                };
-              };
-              readonly registrationChallenges: {
-                readonly to: {
-                  readonly namespace: 'public' & NamespaceId;
-                  readonly model: 'RegistrationChallenge';
                 };
                 readonly cardinality: '1:N';
                 readonly on: {
@@ -3975,14 +3781,6 @@ type ContractBase = Omit<
           };
           readonly onCreate: { readonly kind: 'generator'; readonly id: 'timestampNow' };
           readonly onUpdate: { readonly kind: 'generator'; readonly id: 'timestampNow' };
-        },
-        {
-          readonly ref: {
-            readonly namespace: 'public';
-            readonly table: 'registrationChallenge';
-            readonly column: 'id';
-          };
-          readonly onCreate: { readonly kind: 'generator'; readonly id: 'uuidv4' };
         },
         {
           readonly ref: {

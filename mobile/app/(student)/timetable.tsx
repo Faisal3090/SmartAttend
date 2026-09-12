@@ -224,7 +224,7 @@ export default function TimetableScreen() {
         setError(null);
 
         const response = await fetch(
-          'http://192.168.6.213:5000/api/student/timetable',
+          'http://192.168.1.3:5000/api/student/timetable',
           {
             headers: {
               'Content-Type': 'application/json',
@@ -361,7 +361,7 @@ export default function TimetableScreen() {
 
           if (tokens?.accessToken) {
             fetch(
-              'http://192.168.6.213:5000/api/student/timetable',
+              'http://192.168.1.3:5000/api/student/timetable',
               {
                 headers: {
                   'Content-Type': 'application/json',

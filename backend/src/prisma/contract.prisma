@@ -17,6 +17,17 @@ enum AttendanceSource {
   MANUAL
 }
 
+enum DeviceStatus {
+  ACTIVE
+  REVOKED
+}
+
+enum AttendanceSessionStatus {
+  ACTIVE
+  CLOSED
+  EXPIRED
+}
+
 model User {
   id           Int      @id @default(autoincrement())
   name         String
@@ -24,10 +35,13 @@ model User {
   passwordHash String
   role         UserRole
   isActive     Boolean  @default(true)
+  authVersion  Int      @default(1)
 
   student      Student?
   faculty      Faculty?
   notifications Notification[]
+  revokedDevices StudentDevice[] @relation("DeviceRevokedBy")
+  refreshSessions RefreshSession[]
 
   createdAt    TimestamptzString @default(now())
   updatedAt    temporal.updatedAtString()
@@ -61,21 +75,37 @@ model Student {
   enrollments    Enrollment[]
   attendance     Attendance[]
   devices        StudentDevice[]
+  attendanceChallenges AttendanceChallenge[]
+  registrationChallenges RegistrationChallenge[]
 
   createdAt      TimestamptzString @default(now())
   updatedAt      temporal.updatedAtString()
 }
 
 model StudentDevice {
-  id         Int      @id @default(autoincrement())
-  studentId  Int
-  publicKey  String   @unique
-  isActive   Boolean  @default(true)
+  id                 Int          @id @default(autoincrement())
+  studentId          Int
+  publicKey          String       @unique
+  keyId              String       @unique @default(uuid())
+  algorithm          String       @default("EC")
+  curve              String       @default("P-256")
+  signatureAlgorithm String       @default("SHA256withECDSA")
+  status             DeviceStatus @default(ACTIVE)
+  isActive           Boolean      @default(true)
+  registeredAt       TimestamptzString @default(now())
+  lastSeenAt         TimestamptzString?
+  revokedAt          TimestamptzString?
+  revokedBy          Int?
 
   student    Student  @relation(fields: [studentId], references: [id])
+  revokedByUser User? @relation("DeviceRevokedBy", fields: [revokedBy], references: [id])
+  attendanceChallenges AttendanceChallenge[]
+  refreshSessions RefreshSession[]
 
   createdAt  TimestamptzString @default(now())
   updatedAt  temporal.updatedAtString()
+
+  @@index([studentId], where: "(\"status\" = 'ACTIVE')", unique: true, name: "studentDevice_one_active_per_student")
 }
 
 model Faculty {
@@ -152,14 +182,21 @@ model Timetable {
 }
 
 model AttendanceSession {
-  id          Int      @id @default(autoincrement())
-  classId     Int
-  sessionDate TimestamptzString
-  startedAt   TimestamptzString @default(now())
-  endedAt     TimestamptzString?
+  id                  Int                     @id @default(autoincrement())
+  classId             Int
+  sessionDate         TimestamptzString
+  startedAt           TimestamptzString       @default(now())
+  endedAt             TimestamptzString?
+  broadcastTokenHash  String?                 @unique
+  expiresAt           TimestamptzString?
+  status              AttendanceSessionStatus @default(ACTIVE)
 
   class       Class        @relation(fields: [classId], references: [id])
   attendance  Attendance[]
+  challenges  AttendanceChallenge[]
+
+  @@index([status])
+  @@index([expiresAt])
 
   createdAt   TimestamptzString @default(now())
   updatedAt   temporal.updatedAtString()
@@ -180,6 +217,64 @@ model Attendance {
 
   createdAt  TimestamptzString @default(now())
   updatedAt  temporal.updatedAtString()
+
+  @@unique([sessionId, studentId])
+  @@index([studentId])
+}
+
+model AttendanceChallenge {
+  id            String              @id @default(uuid())
+  sessionId     Int
+  studentId     Int
+  deviceId      Int
+  challengeHash String              @unique
+  expiresAt     TimestamptzString
+  consumedAt    TimestamptzString?
+  createdAt     TimestamptzString   @default(now())
+
+  session       AttendanceSession   @relation(fields: [sessionId], references: [id])
+  student       Student             @relation(fields: [studentId], references: [id])
+  device        StudentDevice      @relation(fields: [deviceId], references: [id])
+
+  @@index([sessionId])
+  @@index([studentId])
+  @@index([deviceId])
+  @@index([expiresAt])
+}
+
+model RegistrationChallenge {
+  id            String             @id @default(uuid())
+  studentId     Int
+  publicKeyHash String
+  challengeHash String             @unique
+  expiresAt     TimestamptzString
+  consumedAt    TimestamptzString?
+  createdAt     TimestamptzString  @default(now())
+
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@index([studentId])
+  @@index([publicKeyHash])
+  @@index([expiresAt])
+}
+
+model RefreshSession {
+  id         Int               @id @default(autoincrement())
+  userId     Int
+  deviceId   Int?
+  tokenHash  String            @unique
+  expiresAt  TimestamptzString
+  revokedAt  TimestamptzString?
+  createdAt  TimestamptzString  @default(now())
+  lastUsedAt TimestamptzString?
+
+  user       User              @relation(fields: [userId], references: [id])
+  device     StudentDevice?    @relation(fields: [deviceId], references: [id])
+
+  @@index([userId])
+  @@index([deviceId])
+  @@index([expiresAt])
+  @@index([revokedAt])
 }
 
 model AttendanceLog {

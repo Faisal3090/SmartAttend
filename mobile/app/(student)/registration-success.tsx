@@ -15,14 +15,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+import { useAuth } from '../../auth/AuthProvider';
 import { Colors } from '../../constants/colors';
 import { Typography } from '../../constants/typography';
 import { Radius, Shadow, Spacing } from '../../constants/spacing';
-import { MOCK_STUDENT } from '../../mocks/mockData';
 
 export default function RegistrationSuccessScreen() {
   const router = useRouter();
-  const student = MOCK_STUDENT;
+  const { user } = useAuth();
   const pingAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function RegistrationSuccessScreen() {
             <Ionicons name="link" size={22} color={Colors.success} />
           </View>
           <View style={styles.linkInfo}>
-            <Text style={styles.linkUsn}>USN: {student.usn}</Text>
+            <Text style={styles.linkUsn}>Student ID: {user?.id ?? 'current account'}</Text>
             <View style={styles.linkStatusRow}>
               <Text style={styles.linkStatusText}>Device Linked Successfully</Text>
               <Ionicons name="checkmark-circle" size={14} color={Colors.success} />

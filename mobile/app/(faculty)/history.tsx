@@ -15,7 +15,7 @@ import { useRouter } from 'expo-router';
 import { Colors } from '../../constants/colors';
 import { useAuth } from '../../auth/AuthProvider';
 
-const API_BASE_URL = 'http://192.168.6.213:5000/api';
+const API_BASE_URL = 'http://192.168.1.3:5000/api';
 
 type Session = {
   id: number;

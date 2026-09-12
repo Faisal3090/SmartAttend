@@ -28,7 +28,7 @@ export default function StartAttendanceScreen() {
       );
 
       const response = await fetch(
-        'http://192.168.6.213:5000/api/attendance/sessions',
+        'http://192.168.1.3:5000/api/attendance/sessions',
         {
           method: 'POST',
           headers: {
@@ -36,7 +36,7 @@ export default function StartAttendanceScreen() {
             Authorization: `Bearer ${tokens.accessToken}`,
           },
           body: JSON.stringify({
-            classId: 1,
+            classId: 2,
           }),
         }
       );
@@ -46,6 +46,19 @@ export default function StartAttendanceScreen() {
       console.log('START SESSION STATUS:', response.status);
       console.log('START SESSION RESPONSE:', result);
 
+      if (response.status === 409 && result.data?.id) {
+        console.log('Rejoining active attendance session:', result.data.id);
+        router.replace({
+          pathname: '/(faculty)/ble-session',
+          params: {
+            durationMinutes: duration.toString(),
+            sessionId: result.data.id.toString(),
+            broadcastToken: result.data.broadcastToken || 'ACTIVE_SESSION_TOKEN',
+          },
+        });
+        return;
+      }
+
       if (!response.ok || !result.success) {
         throw new Error(
           result.message || 'Failed to create attendance session'
@@ -53,12 +66,17 @@ export default function StartAttendanceScreen() {
       }
 
       const sessionId = result.data.id;
+      const broadcastToken = result.data.broadcastToken;
+      if (!broadcastToken) {
+        throw new Error('Attendance session did not return a BLE token');
+      }
 
       router.replace({
         pathname: '/(faculty)/ble-session',
         params: {
           durationMinutes: duration.toString(),
           sessionId: sessionId.toString(),
+          broadcastToken,
         },
       });
     } catch (error) {
